@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>פרטי אירוע</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f5f6f8;
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .header {
+            background-color: #0c4e95;
+            color: white;
+            padding: 1rem;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .footer {
+            background-color: #292f4c;
+            color: white;
+            padding: 1rem;
+            text-align: center;
+            margin-top: auto;
+        }
+        .container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+        .card {
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 500px;
+            background-color: white;
+        }
+        .card-header {
+            background-color: #0073ea;
+            color: white;
+            border-radius: 8px 8px 0 0;
+            padding: 1rem;
+        }
+        .card-body {
+            padding: 1.5rem;
+        }
+        .btn-resolve {
+            background-color: #00ca72;
+            border-color: #00ca72;
+            width: 100%;
+        }
+        .btn-resolve:hover {
+            background-color: #00a25b;
+            border-color: #00a25b;
+        }
+        #loader {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 9999;
+        }
+        .spinner-border {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            margin-top: -1.5rem;
+            margin-left: -1.5rem;
+        }
+        .toast {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 11;
+            min-width: 250px;
+        }
+        @keyframes fadeInOut {
+            0%, 90% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1>מערכת ניהול אירועים</h1>
+    </header>
+
+    <div class="container">
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title" id="incidentTitle">פרטי אירוע</h2>
+            </div>
+            <div class="card-body">
+                <p><strong>תיאור:</strong> <span id="incidentDescription"></span></p>
+                <p><strong>נוצר בתאריך:</strong> <span id="incidentCreatedOn"></span></p>
+                <p><strong>סטטוס:</strong> <span id="incidentStatus"></span></p>
+                <button class="btn btn-resolve btn-lg mt-3" data-bs-toggle="modal" data-bs-target="#resolveModal">סגור אירוע</button>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <p>&copy; 2024 מערכת ניהול אירועים. כל הזכויות שמורות.</p>
+    </footer>
+
+    <!-- Resolve Modal -->
+    <div class="modal fade" id="resolveModal" tabindex="-1" aria-labelledby="resolveModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="resolveModalLabel">סגור אירוע</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="resolveForm">
+                        <div class="mb-3">
+                            <label for="resolutionDescription" class="form-label">תיאור הפתרון</label>
+                            <textarea class="form-control" id="resolutionDescription" rows="3" required></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">סגור</button>
+                    <button type="button" class="btn btn-primary" id="submitResolution">שלח פתרון</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loader -->
+    <div id="loader">
+        <div class="spinner-border text-light" role="status">
+            <span class="visually-hidden">טוען...</span>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header">
+            <i class="bi" id="toastIcon" style="font-size: 1.5rem; margin-left: 8px;"></i>
+            <strong class="me-auto" id="toastTitle">התראה</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body" id="toastMessage"></div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let globalIncidentId;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            globalIncidentId = urlParams.get('ID');
+
+            if (globalIncidentId) {
+                fetchIncidentDetails(globalIncidentId);
+            } else {
+                showToast('שגיאה', 'לא סופק מספר אירוע', 'bg-danger text-white', 'bi-exclamation-circle-fill');
+            }
+
+            document.getElementById('submitResolution').addEventListener('click', function() {
+                const resolutionDescription = document.getElementById('resolutionDescription').value;
+                if (resolutionDescription) {
+                    resolveIncident(globalIncidentId, resolutionDescription);
+                } else {
+                    showToast('שגיאה', 'נא לספק תיאור פתרון', 'bg-danger text-white', 'bi-exclamation-circle-fill');
+                }
+            });
+        });
+
+        function fetchIncidentDetails(id) {
+            showLoader();
+            fetch('https://prod-173.westeurope.logic.azure.com:443/workflows/a5a6c69657974b90a40817e2ed8b0df6/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=TqaBn3xrBjQV3so2BP2RHAboN0L6neqS5kkHdREIly4', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ id: id })
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('incidentTitle').textContent = data.title;
+                document.getElementById('incidentDescription').textContent = data.description;
+                document.getElementById('incidentCreatedOn').textContent = data.createdon;
+                document.getElementById('incidentStatus').textContent = data['statuscode@OData.Community.Display.V1.FormattedValue'];
+                hideLoader();
+                checkResolvedStatus(data['statecode@OData.Community.Display.V1.FormattedValue']);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('שגיאה', 'נכשל במשיכת פרטי האירוע', 'bg-danger text-white', 'bi-exclamation-circle-fill');
+                hideLoader();
+            });
+        }
+
+        function resolveIncident(id, resolutionDescription) {
+            showLoader();
+            const data = {
+                id: id,
+                action: 'resolve case',
+                resolutionDescription: resolutionDescription
+            };
+
+            fetch('https://prod-173.westeurope.logic.azure.com:443/workflows/a5a6c69657974b90a40817e2ed8b0df6/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=TqaBn3xrBjQV3so2BP2RHAboN0L6neqS5kkHdREIly4', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data),
+            })
+            .then(response => response.json())
+            .then(data => {
+                hideLoader();
+                if (data.success) {
+                    showToast('הצלחה', data.message, 'bg-success text-white', 'bi-check-circle-fill');
+                    document.getElementById('resolveModal').querySelector('.btn-close').click();
+                    // Fetch incident details again to check the updated status
+                    fetchIncidentDetails(globalIncidentId);
+                } else {
+                    showToast('שגיאה', data.message, 'bg-danger text-white', 'bi-exclamation-circle-fill');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('שגיאה', 'נכשל בעדכון האירוע', 'bg-danger text-white', 'bi-exclamation-circle-fill');
+                hideLoader();
+            });
+        }
+
+        function showToast(title, message, className, iconClass) {
+            const toastTitle = document.getElementById('toastTitle');
+            const toastMessage = document.getElementById('toastMessage');
+            const toast = new bootstrap.Toast(document.getElementById('liveToast'));
+            const toastElement = document.getElementById('liveToast');
+            toastElement.className = 'toast ' + className + ' show';
+            document.getElementById('toastIcon').className = 'bi ' + iconClass;
+            toastTitle.textContent = title;
+            toastMessage.textContent = message;
+            toast.show();
+            hideLoader()
+        }
+
+        function showLoader() {
+            document.getElementById('loader').style.display = 'block';
+        }
+
+        function hideLoader() {
+            document.getElementById('loader').style.display = 'none';
+        }
+
+        function checkResolvedStatus(status) {
+    if (status === 'Resolved') {
+        document.querySelector('.btn-resolve').disabled = true;
+        document.querySelector('.btn-resolve').textContent = 'אירוע נסגר בהצלחה';
+    }
+}
+    </script>
+</body>
+</html>
