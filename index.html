@@ -3,13 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>פרטי אירוע</title>
+    <title>פרטי אירוע | מערכת ניהול אירועים</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
     <style>
+        :root {
+            --primary-color: #0073ea;
+            --secondary-color: #292f4c;
+            --success-color: #00ca72;
+            --background-color: #f5f6f8;
+        }
         body {
-            background-color: #f5f6f8;
-            font-family: 'Roboto', sans-serif;
+            background-color: var(--background-color);
+            font-family: 'Segoe UI', 'Roboto', sans-serif;
             margin: 0;
             padding: 0;
             min-height: 100vh;
@@ -17,14 +23,14 @@
             flex-direction: column;
         }
         .header {
-            background-color: #0c4e95;
+            background-color: var(--primary-color);
             color: white;
             padding: 1rem;
             text-align: center;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
         .footer {
-            background-color: #292f4c;
+            background-color: var(--secondary-color);
             color: white;
             padding: 1rem;
             text-align: center;
@@ -35,32 +41,45 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 1rem;
+            padding: 2rem 1rem;
         }
         .card {
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
             width: 100%;
-            max-width: 500px;
+            max-width: 600px;
             background-color: white;
+            transition: box-shadow 0.3s ease;
+        }
+        .card:hover {
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
         }
         .card-header {
-            background-color: #0073ea;
+            background-color: var(--primary-color);
             color: white;
-            border-radius: 8px 8px 0 0;
-            padding: 1rem;
-        }
-        .card-body {
+            border-radius: 12px 12px 0 0;
             padding: 1.5rem;
         }
+        .card-body {
+            padding: 2rem;
+        }
         .btn-resolve {
-            background-color: #00ca72;
-            border-color: #00ca72;
+            background-color: var(--success-color);
+            border-color: var(--success-color);
             width: 100%;
+            padding: 0.75rem;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
         }
         .btn-resolve:hover {
             background-color: #00a25b;
             border-color: #00a25b;
+            transform: translateY(-2px);
+        }
+        .btn-resolve:disabled {
+            background-color: #6c757d;
+            border-color: #6c757d;
+            cursor: not-allowed;
         }
         #loader {
             display: none;
@@ -81,11 +100,26 @@
         }
         .toast {
             position: fixed;
-            top: 50%;
+            top: 20px;
             left: 50%;
-            transform: translate(-50%, -50%);
+            transform: translateX(-50%);
             z-index: 11;
             min-width: 250px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .info-item {
+            margin-bottom: 1rem;
+            padding: 0.5rem;
+            border-radius: 8px;
+            background-color: #f8f9fa;
+            transition: background-color 0.3s ease;
+        }
+        .info-item:hover {
+            background-color: #e9ecef;
+        }
+        .info-label {
+            font-weight: bold;
+            color: var(--primary-color);
         }
         @keyframes fadeInOut {
             0%, 90% { opacity: 1; }
@@ -95,19 +129,30 @@
 </head>
 <body>
     <header class="header">
-        <h1>מערכת ניהול אירועים</h1>
+        <h1><i class="bi bi-shield-check"></i> מערכת ניהול אירועים</h1>
     </header>
 
     <div class="container">
         <div class="card">
             <div class="card-header">
-                <h2 class="card-title" id="incidentTitle">פרטי אירוע</h2>
+                <h2 class="card-title" id="incidentTitle"><i class="bi bi-info-circle"></i> פרטי אירוע</h2>
             </div>
             <div class="card-body">
-                <p><strong>תיאור:</strong> <span id="incidentDescription"></span></p>
-                <p><strong>נוצר בתאריך:</strong> <span id="incidentCreatedOn"></span></p>
-                <p><strong>סטטוס:</strong> <span id="incidentStatus"></span></p>
-                <button class="btn btn-resolve btn-lg mt-3" data-bs-toggle="modal" data-bs-target="#resolveModal">סגור אירוע</button>
+                <div class="info-item">
+                    <span class="info-label"><i class="bi bi-card-text"></i> תיאור:</span>
+                    <span id="incidentDescription"></span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label"><i class="bi bi-calendar-event"></i> נוצר בתאריך:</span>
+                    <span id="incidentCreatedOn"></span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label"><i class="bi bi-flag"></i> סטטוס:</span>
+                    <span id="incidentStatus"></span>
+                </div>
+                <button class="btn btn-resolve btn-lg mt-4" data-bs-toggle="modal" data-bs-target="#resolveModal">
+                    <i class="bi bi-check-circle"></i> סגור אירוע
+                </button>
             </div>
         </div>
     </div>
@@ -121,7 +166,7 @@
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="resolveModalLabel">סגור אירוע</h5>
+                    <h5 class="modal-title" id="resolveModalLabel"><i class="bi bi-check2-square"></i> סגור אירוע</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
@@ -192,19 +237,19 @@
             })
             .then(response => response.json())
             .then(data => {
-                document.getElementById('incidentTitle').textContent = data.title;
-    document.getElementById('incidentDescription').textContent = data.description;
-    
-    // Format the incidentCreatedOn value
-    const createdOn = new Date(data.createdon);
-    const formattedCreatedOn = createdOn.toLocaleDateString('en-GB', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-    });
-    document.getElementById('incidentCreatedOn').textContent = formattedCreatedOn;
+                document.getElementById('incidentTitle').innerHTML = `<i class="bi bi-info-circle"></i> ${data.title}`;
+                document.getElementById('incidentDescription').textContent = data.description;
+                
+                // Format the incidentCreatedOn value
+                const createdOn = new Date(data.createdon);
+                const formattedCreatedOn = createdOn.toLocaleDateString('he-IL', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                document.getElementById('incidentCreatedOn').textContent = formattedCreatedOn;
                 document.getElementById('incidentStatus').textContent = data['statuscode@OData.Community.Display.V1.FormattedValue'];
                 hideLoader();
                 checkResolvedStatus(data['statecode@OData.Community.Display.V1.FormattedValue']);
@@ -253,14 +298,14 @@
         function showToast(title, message, className, iconClass) {
             const toastTitle = document.getElementById('toastTitle');
             const toastMessage = document.getElementById('toastMessage');
-            const toast = new bootstrap.Toast(document.getElementById('liveToast'));
-            const toastElement = document.getElementById('liveToast');
-            toastElement.className = 'toast ' + className + ' show';
+            const toastElement = document.querySelector('.toast');
+            const toast = new bootstrap.Toast(toastElement);
+            toastElement.className = 'toast ' + className;
             document.getElementById('toastIcon').className = 'bi ' + iconClass;
             toastTitle.textContent = title;
             toastMessage.textContent = message;
             toast.show();
-            hideLoader()
+            hideLoader();
         }
 
         function showLoader() {
@@ -272,11 +317,14 @@
         }
 
         function checkResolvedStatus(status) {
-    if (status === 'Resolved') {
-        document.querySelector('.btn-resolve').disabled = true;
-        document.querySelector('.btn-resolve').textContent = 'אירוע נסגר בהצלחה';
-    }
-}
+            const resolveButton = document.querySelector('.btn-resolve');
+            if (status === 'Resolved') {
+                resolveButton.disabled = true;
+                resolveButton.innerHTML = '<i class="bi bi-check-circle-fill"></i> אירוע נסגר בהצלחה';
+                resolveButton.classList.remove('btn-resolve');
+                resolveButton.classList.add('btn-secondary');
+            }
+        }
     </script>
 </body>
 </html>
