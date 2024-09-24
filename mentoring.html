@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מערכת מנטורינג CRM - דשבורד</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+        }
+        .navbar-custom {
+            background-color: #003366;
+        }
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+        .btn-custom {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            transition: all 0.3s ease;
+        }
+        .btn-custom:hover {
+            background-color: #45a049;
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">מערכת מנטורינג CRM</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#" onclick="showPage('home')">בית</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="showPage('mentors')">מנטוריות</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="showPage('students')">סטודנטיות</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="showPage('matching')">התאמות</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="showPage('surveys')">סקרים</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div id="home" class="container mt-4">
+        <h2 class="mb-4">דשבורד ראשי</h2>
+        <div class="row">
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">מנטוריות זמינות</h5>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>שם</th>
+                                        <th>מחלקה</th>
+                                        <th>כמות סטודנטיות</th>
+                                        <th>סטטוס</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="mentorsTable">
+                                    <!-- Data will be populated by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <button class="btn btn-custom mt-3" onclick="sendSurvey('mentors')">שלח סקר למנטוריות</button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">בקשות סטודנטיות</h5>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>שם</th>
+                                        <th>מחלקה</th>
+                                        <th>תואר</th>
+                                        <th>סטטוס</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="studentsTable">
+                                    <!-- Data will be populated by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <button class="btn btn-custom mt-3" onclick="createNewMatch()">צור התאמה חדשה</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">התאמות פעילות</h5>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>מנטורית</th>
+                                        <th>סטודנטית</th>
+                                        <th>תאריך התחלה</th>
+                                        <th>סטטוס</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="matchesTable">
+                                    <!-- Data will be populated by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <button class="btn btn-custom mt-3" onclick="sendSurvey('feedback')">שלח סקר משוב</button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">סטטיסטיקות סקרים</h5>
+                        <canvas id="surveyChart"></canvas>
+                        <button class="btn btn-custom mt-3" onclick="createNewSurvey()">צור סקר חדש</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="mentors" class="container mt-4" style="display: none;">
+        <h2 class="mb-4">ניהול מנטוריות</h2>
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">רשימת מנטוריות</h5>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>שם</th>
+                                <th>מחלקה</th>
+                                <th>תפקיד</th>
+                                <th>מספר סטודנטיות</th>
+                                <th>פעולות</th>
+                            </tr>
+                        </thead>
+                        <tbody id="mentorsFullTable">
+                            <!-- Data will be populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+                <button class="btn btn-custom mt-3" onclick="addNewMentor()">הוסף מנטורית חדשה</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="students" class="container mt-4" style="display: none;">
+        <h2 class="mb-4">ניהול סטודנטיות</h2>
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">רשימת סטודנטיות</h5>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>שם</th>
+                                <th>מחלקה</th>
+                                <th>תואר</th>
+                                <th>שנת לימודים</th>
+                                <th>סטטוס מנטורינג</th>
+                                <th>פעולות</th>
+                            </tr>
+                        </thead>
+                        <tbody id="studentsFullTable">
+                            <!-- Data will be populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+                <button class="btn btn-custom mt-3" onclick="addNewStudent()">הוסף סטודנטית חדשה</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="matching" class="container mt-4" style="display: none;">
+        <h2 class="mb-4">ניהול התאמות</h2>
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">התאמות פעילות</h5>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>מנטורית</th>
+                                <th>סטודנטית</th>
+                                <th>תאריך התחלה</th>
+                                <th>סטטוס</th>
+                                <th>פעולות</th>
+                            </tr>
+                        </thead>
+                        <tbody id="matchesFullTable">
+                            <!-- Data will be populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+                <button class="btn btn-custom mt-3" onclick="createNewMatch()">צור התאמה חדשה</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="surveys" class="container mt-4" style="display: none;">
+        <h2 class="mb-4">ניהול סקרים</h2>
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">סקרים פעילים</h5>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>שם הסקר</th>
+                                <th>סוג</th>
+                                <th>תאריך יצירה</th>
+                                <th>תאריך סיום</th>
+                                <th>מספר משיבים</th>
+                                <th>פעולות</th>
+                            </tr>
+                        </thead>
+                        <tbody id="surveysTable">
+                            <!-- Data will be populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+                <button class="btn btn-custom mt-3" onclick="createNewSurvey()">צור סקר חדש</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Sample data
+        const mentors = [
+            { name: "ד\"ר מיכל ישראלי", department: "פיזיקה", role: "מרצה בכירה", students: 2, status: "זמינה" },
+            { name: "פרופ' דינה שלום", department: "כימיה", role: "ראש מחלקה", students: 3, status: "ממתינה לאישור" },
+            { name: "ד\"ר יעל כהן", department: "ביולוגיה", role: "חוקרת", students: 1, status: "זמינה" }
+        ];
+
+        const students = [
+            { name: "שרה כהן", department: "מדעי המחשב", degree: "דוקטורט", year: "שנה שנייה", status: "ממתינה להתאמה" },
+            { name: "רחל לוי", department: "ביולוגיה", degree: "מאסטר", year: "שנה ראשונה", status: "הותאמה" },
+            { name: "לאה גולדברג", department: "פיזיקה", degree: "דוקטורט", year: "שנה שלישית", status: "ממתינה להתאמה" }
+        ];
+
+        const matches = [
+            { mentor: "ד\"ר מיכל ישראלי", student: "שרה כהן", startDate: "01/09/2023", status: "פעיל" },
+            { mentor: "פרופ' דינה שלום", student: "רחל לוי", startDate: "01/10/2023", status: "ממתין לאישור" }
+        ];
+
+        const surveys = [
+            { name: "סקר שביעות רצון מנטוריות", type: "מנטוריות", createdDate: "01/09/2023", endDate: "30/09/2023", responses: 15 },
+            { name: "סקר צרכים סטודנטיות", type: "סטודנטיות", createdDate: "15/09/2023", endDate: "15/10/2023", responses: 25 },
+            { name: "משוב תהליך מנטורינג", type: "משוב", createdDate: "01/10/2023", endDate: "31/10/2023", responses: 10 }
+        ];
+
+        // Populate tables
+        function populateTable(tableId, data, extraColumn = false) {
+            const tableBody = document.getElementById(tableId);
+            tableBody.innerHTML = '';
+            data.forEach(item => {
+                const row = tableBody.insertRow();
+                Object.values(item).forEach(value => {
+                    const cell = row.insertCell();
+                    cell.textContent = value;
+                });
+                if (extraColumn) {
+        const actionsCell = row.insertCell();
+        actionsCell.innerHTML = '<button class="btn btn-sm btn-primary me-2" onclick="editItem()">ערוך</button>' +
+                                '<button class="btn btn-sm btn-danger" onclick="deleteItem()">מחק</button>';
+    }
+});
+}
+
+populateTable('mentorsTable', mentors);
+populateTable('studentsTable', students);
+populateTable('matchesTable', matches);
+populateTable('mentorsFullTable', mentors, true);
+populateTable('studentsFullTable', students, true);
+populateTable('matchesFullTable', matches, true);
+populateTable('surveysTable', surveys, true);
+
+// Chart
+const ctx = document.getElementById('surveyChart').getContext('2d');
+new Chart(ctx, {
+    type: 'bar',
+    data: {
+        labels: ['סקר מנטוריות', 'סקר סטודנטיות', 'סקר משוב'],
+        datasets: [{
+            label: 'אחוז השלמה',
+            data: [75, 60, 80],
+            backgroundColor: [
+                'rgba(255, 99, 132, 0.2)',
+                'rgba(54, 162, 235, 0.2)',
+                'rgba(255, 206, 86, 0.2)'
+            ],
+            borderColor: [
+                'rgba(255, 99, 132, 1)',
+                'rgba(54, 162, 235, 1)',
+                'rgba(255, 206, 86, 1)'
+            ],
+            borderWidth: 1
+        }]
+    },
+    options: {
+        scales: {
+            y: {
+                beginAtZero: true,
+                max: 100
+            }
+        }
+    }
+});
+
+// Navigation function
+function showPage(pageId) {
+    // Hide all pages
+    document.querySelectorAll('.container').forEach(page => {
+        page.style.display = 'none';
+    });
+    // Show the selected page
+    document.getElementById(pageId).style.display = 'block';
+    // Update active nav link
+    document.querySelectorAll('.nav-link').forEach(link => {
+        link.classList.remove('active');
+    });
+    event.target.classList.add('active');
+}
+
+// Functions for button clicks
+function sendSurvey(type) {
+    alert(`שולח סקר ל${type === 'mentors' ? 'מנטוריות' : 'משוב'}`);
+}
+
+function createNewMatch() {
+    alert('יוצר התאמה חדשה');
+}
+
+function createNewSurvey() {
+    alert('יוצר סקר חדש');
+}
+
+function addNewMentor() {
+    alert('מוסיף מנטורית חדשה');
+}
+
+function addNewStudent() {
+    alert('מוסיף סטודנטית חדשה');
+}
+
+function editItem() {
+    alert('עריכת פריט');
+}
+
+function deleteItem() {
+    alert('מחיקת פריט');
+}
+
+// Initialize the page
+showPage('home');
+</script>
+</body>
+</html>
