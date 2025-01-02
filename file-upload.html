@@ -65,6 +65,19 @@
             display: none;
             margin-top: 1rem;
         }
+
+        #uploadContent {
+            display: none;
+        }
+
+        .login-form {
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 2rem;
+            border-radius: 1rem;
+            background-color: white;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        }
     </style>
 </head>
 <body>
@@ -97,58 +110,82 @@
     <!-- Main Content -->
     <main class="flex-grow-1 py-5">
         <div class="container">
-            <!-- Header Section -->
-            <div class="text-center mb-5">
-                <h1 class="display-4 mb-3">Post-Doc Secure File Upload</h1>
-                <p class="lead text-muted">Upload your files securely with our state-of-the-art file transfer system</p>
-            </div>
-
-            <!-- Features -->
-            <div class="row mb-5">
-                <div class="col-md-4 mb-4">
-                    <div class="card h-100 feature-card">
-                        <div class="card-body text-center">
-                            <i class="bi bi-shield-check text-primary mb-3" style="font-size: 2rem;"></i>
-                            <h5 class="card-title">Secure Transfer</h5>
-                            <p class="card-text">Your files are encrypted and protected during transfer</p>
-                        </div>
-                    </div>
+            <!-- Login Form -->
+            <div id="loginContent">
+                <div class="text-center mb-5">
+                    <h1 class="display-4 mb-3">Post-Doc Secure File Upload</h1>
+                    <p class="lead text-muted">Please authenticate to access the upload portal</p>
                 </div>
-                <div class="col-md-4 mb-4">
-                    <div class="card h-100 feature-card">
-                        <div class="card-body text-center">
-                            <i class="bi bi-lightning text-primary mb-3" style="font-size: 2rem;"></i>
-                            <h5 class="card-title">Fast Upload</h5>
-                            <p class="card-text">Optimized for quick and efficient file transfers</p>
+                <div class="login-form">
+                    <form id="loginForm">
+                        <div class="mb-3">
+                            <label for="username" class="form-label">Username</label>
+                            <input type="text" class="form-control" id="username" required>
                         </div>
-                    </div>
-                </div>
-                <div class="col-md-4 mb-4">
-                    <div class="card h-100 feature-card">
-                        <div class="card-body text-center">
-                            <i class="bi bi-file-earmark-check text-primary mb-3" style="font-size: 2rem;"></i>
-                            <h5 class="card-title">All File Types</h5>
-                            <p class="card-text">Support for all file formats and sizes</p>
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Password</label>
+                            <input type="password" class="form-control" id="password" required>
                         </div>
-                    </div>
+                        <button type="submit" class="btn btn-primary w-100">Login</button>
+                    </form>
                 </div>
             </div>
 
-            <!-- Upload Zone -->
-            <div class="row justify-content-center">
-                <div class="col-md-8 col-lg-6">
-                    <div class="upload-zone shadow-sm" id="uploadZone">
-                        <i class="bi bi-cloud-arrow-up upload-icon"></i>
-                        <h4 class="mb-3">Upload Your File</h4>
-                        <input type="file" id="fileInput" accept="*">
-                        <label for="fileInput" class="btn btn-primary mb-3">Choose a file or drop here</label>
-                        <p id="fileName" class="text-muted small mb-3"></p>
-                        <div class="progress">
-                            <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+            <!-- Upload Content -->
+            <div id="uploadContent">
+                <!-- Header Section -->
+                <div class="text-center mb-5">
+                    <h1 class="display-4 mb-3">Post-Doc Secure File Upload</h1>
+                    <p class="lead text-muted">Upload your files securely with our state-of-the-art file transfer system</p>
+                </div>
+
+                <!-- Features -->
+                <div class="row mb-5">
+                    <div class="col-md-4 mb-4">
+                        <div class="card h-100 feature-card">
+                            <div class="card-body text-center">
+                                <i class="bi bi-shield-check text-primary mb-3" style="font-size: 2rem;"></i>
+                                <h5 class="card-title">Secure Transfer</h5>
+                                <p class="card-text">Your files are encrypted and protected during transfer</p>
+                            </div>
                         </div>
-                        <button id="sendButton" class="btn btn-success" disabled>
-                            <i class="bi bi-upload me-2"></i>Upload File
-                        </button>
+                    </div>
+                    <div class="col-md-4 mb-4">
+                        <div class="card h-100 feature-card">
+                            <div class="card-body text-center">
+                                <i class="bi bi-lightning text-primary mb-3" style="font-size: 2rem;"></i>
+                                <h5 class="card-title">Fast Upload</h5>
+                                <p class="card-text">Optimized for quick and efficient file transfers</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-4">
+                        <div class="card h-100 feature-card">
+                            <div class="card-body text-center">
+                                <i class="bi bi-file-earmark-check text-primary mb-3" style="font-size: 2rem;"></i>
+                                <h5 class="card-title">All File Types</h5>
+                                <p class="card-text">Support for all file formats and sizes</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Upload Zone -->
+                <div class="row justify-content-center">
+                    <div class="col-md-8 col-lg-6">
+                        <div class="upload-zone shadow-sm" id="uploadZone">
+                            <i class="bi bi-cloud-arrow-up upload-icon"></i>
+                            <h4 class="mb-3">Upload Your File</h4>
+                            <input type="file" id="fileInput" accept="*">
+                            <label for="fileInput" class="btn btn-primary mb-3">Choose a file or drop here</label>
+                            <p id="fileName" class="text-muted small mb-3"></p>
+                            <div class="progress">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+                            </div>
+                            <button id="sendButton" class="btn btn-success" disabled>
+                                <i class="bi bi-upload me-2"></i>Upload File
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -173,6 +210,29 @@
     <!-- Bootstrap JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
     <script>
+        // Authentication logic
+        const loginForm = document.getElementById('loginForm');
+        const loginContent = document.getElementById('loginContent');
+        const uploadContent = document.getElementById('uploadContent');
+
+        // In a real application, these would be stored securely on the server
+        const VALID_USERNAME = 'admin';
+        const VALID_PASSWORD = 'password123';
+
+        loginForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            if (username === VALID_USERNAME && password === VALID_PASSWORD) {
+                loginContent.style.display = 'none';
+                uploadContent.style.display = 'block';
+            } else {
+                showAlert('Invalid username or password', 'danger');
+            }
+        });
+
+        // File upload logic
         const fileInput = document.getElementById('fileInput');
         const fileNameDisplay = document.getElementById('fileName');
         const sendButton = document.getElementById('sendButton');
@@ -267,7 +327,8 @@
                 ${message}
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             `;
-            uploadZone.insertAdjacentElement('beforebegin', alertDiv);
+            const container = uploadContent.style.display === 'none' ? loginForm : uploadZone;
+            container.insertAdjacentElement('beforebegin', alertDiv);
             setTimeout(() => alertDiv.remove(), 5000);
         }
 
