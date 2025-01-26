@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>טופס פנייה חכם</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="bg-gray-50 text-gray-800">
+    <!-- Login Stage -->
+<div id="loginStage" class="min-h-screen flex items-center justify-center p-4 md:p-8">
+    <div class="max-w-md w-full bg-white rounded-xl shadow-lg">
+        <div class="bg-blue-600 text-white p-6 rounded-t-xl">
+            <h1 class="text-2xl font-bold text-center">כניסה למערכת</h1>
+        </div>
+        <form id="loginForm" class="p-6 space-y-6">
+            <div>
+                <label class="block text-sm font-medium mb-2">
+                    <i class="fas fa-user text-gray-400 ml-2"></i>
+                    שם משתמש
+                </label>
+                <input type="text" id="username" required
+                    class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-2">
+                    <i class="fas fa-lock text-gray-400 ml-2"></i>
+                    סיסמה
+                </label>
+                <input type="password" id="password" required
+                    class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500">
+            </div>
+            <button type="submit" 
+                class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition duration-200 flex items-center justify-center gap-2">
+                <i class="fas fa-sign-in-alt"></i>
+                התחבר
+            </button>
+        </form>
+    </div>
+</div>
+<div id="mainApp" class="hidden min-h-screen p-4 md:p-8">
+    <!-- Add user info in header -->
+    <div class="max-w-4xl mx-auto bg-white rounded-xl shadow-lg">
+        <div class="bg-blue-600 text-white p-6 rounded-t-xl">
+            <div class="flex justify-between items-center">
+                <h1 class="text-2xl font-bold">טופס פנייה חכם</h1>
+                <div class="flex items-center gap-3">
+                    <span id="userFullName" class="text-sm"></span>
+                    <div class="w-10 h-10 rounded-full bg-white text-blue-600 flex items-center justify-center font-bold text-xl" id="userAvatar"></div>
+                    <button id="logoutBtn" class="text-sm hover:text-blue-200 transition-colors">
+                        <i class="fas fa-sign-out-alt"></i>
+                        התנתק
+                    </button>
+                </div>
+            </div>
+        </div>
+
+            <!-- Stage 1: Initial Input -->
+            <div id="stage1" class="p-6 space-y-6">
+                <!-- Image Upload -->
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <h2 class="text-xl font-semibold mb-4 flex items-center gap-2">
+                        <i class="fas fa-camera text-blue-600"></i>
+                        העלאת תמונה
+                    </h2>
+                    <div class="flex flex-col items-center">
+                        <div id="imagePreview" class="w-full h-48 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center mb-4 bg-gray-100">
+                            <div id="uploadPrompt" class="text-center p-4">
+                                <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-2"></i>
+                                <p>גרור תמונה לכאן או לחץ לבחירה</p>
+                            </div>
+                            <img id="previewImg" class="hidden max-h-full max-w-full object-contain" />
+                        </div>
+                        <input type="file" id="imageInput" accept="image/*" class="hidden">
+                    </div>
+                </div>
+
+                <!-- Location Section -->
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-semibold flex items-center gap-2">
+                            <i class="fas fa-map-marker-alt text-blue-600"></i>
+                            מיקום
+                        </h2>
+                        <button type="button" id="getLocation" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2">
+                            <i class="fas fa-location-arrow"></i>
+                            זהה מיקום
+                        </button>
+                    </div>
+                    <div id="locationStatus" class="mb-4 hidden p-2 rounded"></div>
+                    <div id="locationDetails" class="grid gap-2"></div>
+                </div>
+
+                <!-- Description Input -->
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <h2 class="text-xl font-semibold mb-4 flex items-center gap-2">
+                        <i class="fas fa-comment text-blue-600"></i>
+                        תיאור הפנייה
+                    </h2>
+                    <textarea id="caseDescription" rows="4" class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500" 
+                        placeholder="תאר את הפנייה שלך..."></textarea>
+                </div>
+
+                <!-- Analyze Button -->
+                <div class="flex justify-center">
+                    <button id="analyzeButton" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition duration-200 flex items-center gap-2">
+                        <i class="fas fa-magic"></i>
+                        נתח פנייה
+                    </button>
+                </div>
+            </div>
+
+            <!-- Stage 2: Review and Submit -->
+            <div id="stage2" class="hidden p-6 space-y-6">
+                <form id="caseForm" class="space-y-6">
+                    <!-- Location Section -->
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-xl font-semibold flex items-center gap-2">
+                                <i class="fas fa-map-marker-alt text-blue-600"></i>
+                                פרטי מיקום
+                            </h2>
+                        </div>
+                        <div class="grid md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium mb-2">
+                                    <i class="fas fa-compass text-gray-400 mr-1"></i>
+                                    מיקום כללי של אירוע
+                                </label>
+                                <select id="locationType" name="locationType" class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                                    <option value="בחוץ">בחוץ</option>
+                                    <option value="בפנים">בפנים</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">
+                                    <i class="fas fa-road text-gray-400 mr-1"></i>
+                                    רחוב
+                                </label>
+                                <input type="text" id="street" name="street" class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">
+                                    <i class="fas fa-city text-gray-400 mr-1"></i>
+                                    עיר
+                                </label>
+                                <input type="text" id="city" name="city" class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Event Details Section -->
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h2 class="text-xl font-semibold mb-4 flex items-center gap-2">
+                            <i class="fas fa-info-circle text-blue-600"></i>
+                            פרטי האירוע
+                        </h2>
+                        <div class="grid md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium mb-2">
+                                    <i class="fas fa-tag text-gray-400 mr-1"></i>
+                                    נושא אירוע
+                                </label>
+                                <select id="category" name="category" class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                                    <option value="חשמל">חשמל</option>
+                                    <option value="כביש">כביש</option>
+                                    <option value="ריהוט">ריהוט</option>
+                                    <option value="אירוע רפואי">אירוע רפואי</option>
+                                    <option value="אחר">אחר</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">
+                                    <i class="fas fa-exclamation-triangle text-gray-400 mr-1"></i>
+                                    רמת דחיפות
+                                </label>
+                                <select id="urgency" name="urgency" class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                                    <option value="קל">קל</option>
+                                    <option value="בינוני">בינוני</option>
+                                    <option value="דחוף">דחוף</option>
+                                </select>
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-medium mb-2">
+                                    <i class="fas fa-comment text-gray-400 mr-1"></i>
+                                    תיאור אירוע
+                                </label>
+                                <textarea id="description" name="description" rows="4" 
+                                    class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Department Section -->
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h2 class="text-xl font-semibold mb-4 flex items-center gap-2">
+                            <i class="fas fa-building text-blue-600"></i>
+                            פרטי מחלקה
+                        </h2>
+                        <div class="grid md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium mb-2">
+                                    <i class="fas fa-building text-gray-400 mr-1"></i>
+                                    מחלקה מטפלת
+                                </label>
+                                <input type="text" id="department" name="department" 
+                                    class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">
+                                    <i class="fas fa-users text-gray-400 mr-1"></i>
+                                    סוג פונה
+                                </label>
+                                <input type="text" id="reporterType" name="reporterType" 
+                                    class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h2 class="text-xl font-semibold mb-4 flex items-center gap-2">
+                            <i class="fas fa-user text-blue-600"></i>
+                            פרטי פונה
+                        </h2>
+                        <div class="grid md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium mb-2">
+                                    <i class="fas fa-user text-gray-400 mr-1"></i>
+                                    שם פרטי
+                                </label>
+                                <input type="text" id="contactFirstName" name="firstName" 
+                                    class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">
+                                    <i class="fas fa-user text-gray-400 mr-1"></i>
+                                    שם משפחה
+                                </label>
+                                <input type="text" id="contactLastName" name="lastName" 
+                                    class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">
+                                    <i class="fas fa-envelope text-gray-400 mr-1"></i>
+                                    אימייל
+                                </label>
+                                <input type="email" id="contactEmail" name="email" 
+                                    class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">
+                                    <i class="fas fa-phone text-gray-400 mr-1"></i>
+                                    טלפון
+                                </label>
+                                <input type="tel" id="contactPhone" name="phone" 
+                                    class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                            </div>
+                        </div>
+                    
+                    </div>
+                    <div class="flex justify-center gap-4">
+                        <button type="button" id="backButton" 
+                            class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-6 rounded-lg transition duration-200 flex items-center gap-2">
+                            <i class="fas fa-arrow-right"></i>
+                            חזור
+                        </button>
+                        <button type="submit" 
+                            class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition duration-200 flex items-center gap-2">
+                            <i class="fas fa-paper-plane"></i>
+                            שלח טופס
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // Global variables to store data
+    let currentImage = null;
+    let currentLocation = null;
+
+    // Image Upload Handler
+    const imagePreview = document.getElementById('imagePreview');
+    const imageInput = document.getElementById('imageInput');
+    const previewImg = document.getElementById('previewImg');
+    const uploadPrompt = document.getElementById('uploadPrompt');
+// Add at the start of your script section:
+
+// User state management
+let currentUser = null;
+const dummyContactData = {
+    firstName: "שמואל",
+    lastName: "לוי",
+    email: "sm@wiz.ac.il",
+    phone: "0501122558"
+};
+
+// Update the contact form IDs in the HTML:
+document.getElementById('contactFirstName').value = dummyContactData.firstName;
+document.getElementById('contactLastName').value = dummyContactData.lastName;
+document.getElementById('contactEmail').value = dummyContactData.email;
+document.getElementById('contactPhone').value = dummyContactData.phone;
+// Login form handler
+document.getElementById('loginForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const username = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
+    
+    // Demo login - accept any credentials
+    currentUser = {
+        username: username,
+        fullName: username // In real app this would come from the server
+    };
+    
+    // Update UI for logged in user
+    document.getElementById('userFullName').textContent = currentUser.fullName;
+    document.getElementById('userAvatar').textContent = currentUser.fullName.charAt(0);
+    
+    // Hide login, show main app
+    document.getElementById('loginStage').classList.add('hidden');
+    document.getElementById('mainApp').classList.remove('hidden');
+    
+    // Store in sessionStorage
+    sessionStorage.setItem('user', JSON.stringify(currentUser));
+});
+
+// Logout handler
+document.getElementById('logoutBtn').addEventListener('click', function() {
+    currentUser = null;
+    sessionStorage.removeItem('user');
+    window.location.reload();
+});
+
+// Check for existing session on page load
+window.addEventListener('load', function() {
+    const savedUser = sessionStorage.getItem('user');
+    if (savedUser) {
+        currentUser = JSON.parse(savedUser);
+        document.getElementById('userFullName').textContent = currentUser.fullName;
+        document.getElementById('userAvatar').textContent = currentUser.fullName.charAt(0);
+        document.getElementById('loginStage').classList.add('hidden');
+        document.getElementById('mainApp').classList.remove('hidden');
+    }
+});
+    imagePreview.addEventListener('click', () => imageInput.click());
+    imagePreview.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        imagePreview.classList.add('border-blue-500');
+    });
+    imagePreview.addEventListener('dragleave', () => {
+        imagePreview.classList.remove('border-blue-500');
+    });
+    imagePreview.addEventListener('drop', (e) => {
+        e.preventDefault();
+        imagePreview.classList.remove('border-blue-500');
+        const file = e.dataTransfer.files[0];
+        if (file && file.type.startsWith('image/')) {
+            handleImageFile(file);
+        }
+    });
+
+    imageInput.addEventListener('change', (e) => {
+        if (e.target.files[0]) {
+            handleImageFile(e.target.files[0]);
+        }
+    });
+
+    function handleImageFile(file) {
+        currentImage = file;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            previewImg.src = e.target.result;
+            previewImg.classList.remove('hidden');
+            uploadPrompt.classList.add('hidden');
+        };
+        reader.readAsDataURL(file);
+    }
+
+    // Location Handler
+    document.getElementById('getLocation').addEventListener('click', function() {
+        const statusDiv = document.getElementById('locationStatus');
+        const detailsDiv = document.getElementById('locationDetails');
+        statusDiv.classList.remove('hidden');
+
+        function showStatus(message, type = 'info') {
+            statusDiv.innerHTML = `<i class="fas fa-${type === 'error' ? 'exclamation-triangle text-red-500' : 'info-circle text-blue-500'} mr-2"></i>${message}`;
+            statusDiv.className = `mb-4 p-2 rounded ${type === 'error' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'}`;
+        }
+
+        if (navigator.geolocation) {
+            showStatus('<div class="animate-spin inline-block w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full mr-2"></div>מאתר את המיקום שלך...');
+
+            navigator.geolocation.getCurrentPosition(
+                async function(position) {
+                    try {
+                        const response = await fetch(
+                            `https://nominatim.openstreetmap.org/reverse?lat=${position.coords.latitude}&lon=${position.coords.longitude}&format=json&accept-language=he`
+                        );
+                        
+                        if (!response.ok) throw new Error('שגיאה באיתור הכתובת');
+
+                        const data = await response.json();
+                        currentLocation = data;
+                        showStatus('המיקום זוהה בהצלחה');
+                        
+                        detailsDiv.innerHTML = `
+                            <div class="text-sm">
+                                <strong>כתובת:</strong> ${data.display_name}
+                            </div>
+                            <div class="text-sm">
+                                <strong>רחוב:</strong> ${data.address.road || 'לא זוהה'}
+                            </div>
+                            <div class="text-sm">
+                                <strong>עיר:</strong> ${data.address.city || data.address.town || 'לא זוהה'}
+                            </div>
+                        `;
+                    } catch (error) {
+                        showStatus('שגיאה בקבלת פרטי הכתובת', 'error');
+                    }
+                },
+                function(error) {
+                    let message = 'שגיאה בזיהוי המיקום';
+                    switch (error.code) {
+                        case error.PERMISSION_DENIED:
+                            message = 'אין הרשאה לקבלת מיקום';
+                            break;
+                        case error.POSITION_UNAVAILABLE:
+                            message = 'המיקום אינו זמין';
+                            break;
+                        case error.TIMEOUT:
+                            message = 'תם הזמן לקבלת המיקום';
+                            break;
+                    }
+                    showStatus(message, 'error');
+                }
+            );
+        } else {
+            showStatus('הדפדפן אינו תומך בשירותי מיקום', 'error');
+        }
+    });
+
+// Analyze Button Handler
+document.getElementById('analyzeButton').addEventListener('click', async function() {
+    if (!currentImage) {
+        alert('נא להעלות תמונה');
+        return;
+    }
+    if (!currentLocation) {
+        alert('נא לזהות מיקום');
+        return;
+    }
+    if (!document.getElementById('caseDescription').value.trim()) {
+        alert('נא להזין תיאור פנייה');
+        return;
+    }
+
+    this.disabled = true;
+    this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> מנתח...';
+
+    try {
+        // Convert image to base64
+        const imageBase64 = await new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result.split(',')[1]);
+            reader.readAsDataURL(currentImage);
+        });
+
+        // Create structured data for analysis
+        const analysisData = {
+            image: {
+                data: imageBase64,
+                filename: currentImage.name,
+                contentType: currentImage.type
+            },
+            location: {
+                coordinates: {
+                    lat: currentLocation.lat,
+                    lon: currentLocation.lon
+                },
+                address: {
+                    street: currentLocation.address?.road || '',
+                    city: currentLocation.address?.city || currentLocation.address?.town || '',
+                    formatted_address: currentLocation.display_name || ''
+                }
+            },
+            description: document.getElementById('caseDescription').value,
+            metadata: {
+                timestamp: new Date().toISOString(),
+                source: 'web-form'
+            }
+        };
+
+        const response = await fetch('https://prod-02.northeurope.logic.azure.com:443/workflows/d9dba3d45cfb43bb88ee75d80662afac/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=5gmD4CitJbzzdYcOm7TDX-RAvITu6viyFd7uHd1EKuU', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(analysisData)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => null);
+            throw new Error(errorData?.message || 'שגיאה בניתוח הפנייה');
+        }
+
+        const responseData = await response.json();
+        
+        // Direct access to the analysis data
+        const analysisResult = responseData;
+        
+        if (!analysisResult.success) {
+            throw new Error('ניתוח הפנייה נכשל');
+        }
+
+        // Switch to Stage 2 and prepare form
+        document.getElementById('stage1').classList.add('hidden');
+        const stage2 = document.getElementById('stage2');
+        stage2.classList.remove('hidden');
+
+        // Populate Stage 2 form with analysis results
+        const analysis = analysisResult.analysis;
+        
+        // Populate location fields
+        document.getElementById('locationType').value = analysis.location.type;
+        document.getElementById('street').value = analysis.location.address.street || currentLocation.address?.road || '';
+        document.getElementById('city').value = analysis.location.address.city || currentLocation.address?.city || '';
+
+        // Populate event details
+        document.getElementById('category').value = analysis.event.category;
+        document.getElementById('urgency').value = analysis.event.urgency;
+
+        // Build description text with detected objects
+        let descriptionText = analysis.event.description;
+        if (analysis.event.detected_objects && analysis.event.detected_objects.length > 0) {
+            descriptionText += '\n\nזוהו בתמונה:\n';
+            if (Array.isArray(analysis.event.detected_objects)) {
+                // If detected_objects is an array of strings
+                descriptionText += analysis.event.detected_objects.map(obj => 
+                    `• ${typeof obj === 'string' ? obj : obj.item}`
+                ).join('\n');
+            }
+        }
+        document.getElementById('description').value = descriptionText;
+
+        // Populate department fields
+        document.getElementById('department').value = analysis.automatic_fields.department;
+        document.getElementById('reporterType').value = analysis.automatic_fields.reporter_type;
+
+        // Add or update confidence score and suggested department indicator
+        const firstSection = stage2.querySelector('.bg-gray-50');
+        let confidenceContainer = document.getElementById('confidenceIndicator');
+        
+        if (!confidenceContainer) {
+            confidenceContainer = document.createElement('div');
+            confidenceContainer.id = 'confidenceIndicator';
+            firstSection.appendChild(confidenceContainer);
+        }
+
+        if (analysis.confidence_score > 0.8) {
+            confidenceContainer.innerHTML = `
+                <div class="space-y-2">
+                    <div class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm inline-flex items-center gap-1">
+                        <i class="fas fa-check-circle"></i>
+                        רמת דיוק גבוהה (${Math.round(analysis.confidence_score * 100)}%)
+                    </div>
+                    ${analysis.suggested_department ? `
+                    <div class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm inline-flex items-center gap-1">
+                        <i class="fas fa-building"></i>
+                        מחלקה מוצעת: ${analysis.suggested_department}
+                    </div>
+                    ` : ''}
+                </div>
+            `;
+        } else {
+            confidenceContainer.innerHTML = '';
+        }
+
+        // Add raw analysis data display if needed for debugging
+        if (analysis.raw_image_analysis && analysis.raw_image_analysis.labels) {
+            console.log('זיהוי תמונה:', analysis.raw_image_analysis.labels);
+        }
+
+    } catch (error) {
+        alert('שגיאה בניתוח הפנייה: ' + error.message);
+    } finally {
+        this.disabled = false;
+        this.innerHTML = '<i class="fas fa-magic"></i> נתח פנייה';
+    }
+});  
+
+
+
+
+document.getElementById('backButton').addEventListener('click', function() {
+        document.getElementById('stage2').classList.add('hidden');
+        document.getElementById('stage1').classList.remove('hidden');
+    });
+
+
+
+// Form Submit Handler
+document.getElementById('caseForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const submitButton = this.querySelector('button[type="submit"]');
+    submitButton.disabled = true;
+    submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> שולח...';
+
+    try {
+        const formData = {
+            location: {
+                type: document.getElementById('locationType').value,
+                street: document.getElementById('street').value,
+                city: document.getElementById('city').value
+            },
+            event: {
+                category: document.getElementById('category').value,
+                urgency: document.getElementById('urgency').value,
+                description: document.getElementById('description').value
+            },
+            department: document.getElementById('department').value,
+            reporterType: document.getElementById('reporterType').value,
+            contact: {
+                firstName: document.getElementById('contactFirstName').value,
+                lastName: document.getElementById('contactLastName').value,
+                email: document.getElementById('contactEmail').value,
+                phone: document.getElementById('contactPhone').value
+            },
+            image: await new Promise(resolve => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result);
+                reader.readAsDataURL(currentImage);
+            })
+        };
+
+        const response = await fetch('https://3d7bf2afe3ee412993e0fedf4cecf08d.api.mockbin.io/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData)
+        });
+
+        if (!response.ok) throw new Error('שגיאה בשליחת הטופס');
+
+        alert('הטופס נשלח בהצלחה!');
+        window.location.reload(); // Reset form
+
+    } catch (error) {
+        alert('שגיאה בשליחת הטופס: ' + error.message);
+    } finally {
+        submitButton.disabled = false;
+        submitButton.innerHTML = '<i class="fas fa-paper-plane"></i> שלח טופס';
+    }
+});   
+    </script>
+</body>
+</html>
