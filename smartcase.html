@@ -3,278 +3,371 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>טופס פנייה חכם</title>
+    <title>מערכת פניות חכמה | WizCity</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .animate-gradient {
+            background-size: 200% 200%;
+            animation: gradient 3s ease infinite;
+        }
+
+        .company-bg {
+            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+        }
+
+        .card-hover {
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+
+        .logo-text {
+            background: linear-gradient(45deg, #60a5fa, #93c5fd);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: shine 2s ease-in-out infinite;
+        }
+
+        @keyframes shine {
+            0%, 100% { filter: brightness(100%); }
+            50% { filter: brightness(120%); }
+        }
+
+        .section-fade {
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .floating {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+    </style>
 </head>
-<body class="bg-gray-50 text-gray-800">
-    <!-- Login Stage -->
-<div id="loginStage" class="min-h-screen flex items-center justify-center p-4 md:p-8">
-    <div class="max-w-md w-full bg-white rounded-xl shadow-lg">
-        <div class="bg-blue-600 text-white p-6 rounded-t-xl">
-            <h1 class="text-2xl font-bold text-center">כניסה למערכת</h1>
+<body class="bg-gray-100 text-gray-800">
+    <!-- Progress Bar -->
+    <div class="fixed top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-blue-500 animate-gradient z-50"></div>
+
+    <!-- Branding Bar -->
+    <div class="bg-white shadow-sm py-2 px-4 mb-4">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <div class="flex items-center">
+                <i class="fas fa-city text-3xl text-blue-600 mr-2"></i>
+                <span class="text-xl font-bold logo-text">WizCity</span>
+            </div>
+            <div class="flex items-center text-sm text-gray-500">
+                <img src="https://mailmeteor.com/logos/assets/PNG/Microsoft_Logo_512px.png" alt="abra microsoft solutions" class="w-6 h-6 mr-2">
+                <span class="mr-2 font-semibold">abra microsoft Solutions</span>
+                <img src="https://github.com/roeiredlerabra/Weizmann-Institute-of-Science/blob/main/abra%20Profile%20Photo.png?raw=true" alt="abra microsoft solutions" class="w-6 h-6 mr-2">
+            </div>
         </div>
-        <form id="loginForm" class="p-6 space-y-6">
-            <div>
-                <label class="block text-sm font-medium mb-2">
-                    <i class="fas fa-user text-gray-400 ml-2"></i>
-                    שם משתמש
-                </label>
-                <input type="text" id="username" required
-                    class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500">
+    </div>
+
+    <!-- Login Stage -->
+    <div id="loginStage" class="min-h-screen flex items-center justify-center p-4 md:p-8">
+        <div class="max-w-md w-full bg-white rounded-xl shadow-lg card-hover">
+            <div class="company-bg text-white p-8 rounded-t-xl">
+                <div class="text-center">
+                    <i class="fas fa-city text-5xl mb-4 floating"></i>
+                    <h1 class="text-2xl font-bold">ברוכים הבאים</h1>
+                    <p class="text-blue-100">מערכת פניות חכמה</p>
+                </div>
             </div>
-            <div>
-                <label class="block text-sm font-medium mb-2">
-                    <i class="fas fa-lock text-gray-400 ml-2"></i>
-                    סיסמה
-                </label>
-                <input type="password" id="password" required
-                    class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500">
+            <form id="loginForm" class="p-8 space-y-6">
+                <div>
+                    <label class="block text-sm font-medium mb-2">
+                        <i class="fas fa-user text-gray-400 ml-2"></i>
+                        שם משתמש
+                    </label>
+                    <input type="text" id="username" required
+                        class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 transition-all">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">
+                        <i class="fas fa-lock text-gray-400 ml-2"></i>
+                        סיסמה
+                    </label>
+                    <input type="password" id="password" required
+                        class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 transition-all">
+                </div>
+                <button type="submit" 
+                    class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl">
+                    <i class="fas fa-sign-in-alt"></i>
+                    התחבר
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="mainApp" class="hidden min-h-screen p-4 md:p-8">
+        <div class="max-w-7xl mx-auto">
+            <!-- Header Card -->
+            <div class="bg-white rounded-xl shadow-lg mb-6">
+                <div class="company-bg text-white p-6 rounded-t-xl">
+                    <div class="flex justify-between items-center">
+                        <h1 class="text-2xl font-bold">מערכת פניות חכמה</h1>
+                        <div class="flex items-center gap-3">
+                            <span id="userFullName" class="text-sm"></span>
+                            <div class="w-10 h-10 rounded-full bg-white text-blue-600 flex items-center justify-center font-bold text-xl shadow-lg" id="userAvatar"></div>
+                            <button id="logoutBtn" class="text-sm hover:text-blue-200 transition-colors">
+                                <i class="fas fa-sign-out-alt"></i>
+                                התנתק
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+<!-- Stage 1: Initial Input -->
+<div id="stage1" class="p-6 space-y-6">
+    <!-- Image Upload -->
+    <div class="bg-gray-50 p-4 rounded-lg card-hover section-fade">
+        <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+            <i class="fas fa-camera text-blue-600"></i>
+            העלאת תמונה
+        </h2>
+        <div class="flex flex-col items-center">
+            <div id="imagePreview" class="w-full h-48 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center mb-4 bg-gray-100 transition-all hover:border-blue-500">
+                <div id="uploadPrompt" class="text-center p-4">
+                    <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-2"></i>
+                    <p>גרור תמונה לכאן או לחץ לבחירה</p>
+                </div>
+                <img id="previewImg" class="hidden max-h-full max-w-full object-contain" />
             </div>
-            <button type="submit" 
-                class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition duration-200 flex items-center justify-center gap-2">
-                <i class="fas fa-sign-in-alt"></i>
-                התחבר
+            <input type="file" id="imageInput" accept="image/*" class="hidden">
+        </div>
+    </div>
+
+    <!-- Location Section -->
+    <div class="bg-gray-50 p-4 rounded-lg card-hover section-fade" style="animation-delay: 0.2s">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-bold flex items-center gap-2">
+                <i class="fas fa-map-marker-alt text-blue-600"></i>
+                מיקום
+            </h2>
+            <button type="button" id="getLocation" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-all shadow hover:shadow-lg">
+                <i class="fas fa-location-arrow"></i>
+                זהה מיקום
             </button>
-        </form>
+        </div>
+        <div id="locationStatus" class="mb-4 hidden p-2 rounded"></div>
+        <div id="locationDetails" class="grid gap-2"></div>
+    </div>
+
+    <!-- Description Input -->
+    <div class="bg-gray-50 p-4 rounded-lg card-hover section-fade" style="animation-delay: 0.4s">
+        <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+            <i class="fas fa-comment text-blue-600"></i>
+            תיאור הפנייה
+        </h2>
+        <textarea id="caseDescription" rows="4" 
+            class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 transition-all" 
+            placeholder="תאר את הפנייה שלך..."></textarea>
+    </div>
+
+    <!-- Analyze Button -->
+    <div class="flex justify-center">
+        <button id="analyzeButton" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition-all flex items-center gap-2 shadow-lg hover:shadow-xl">
+            <i class="fas fa-magic"></i>
+            נתח פנייה
+        </button>
     </div>
 </div>
-<div id="mainApp" class="hidden min-h-screen p-4 md:p-8">
-    <!-- Add user info in header -->
-    <div class="max-w-4xl mx-auto bg-white rounded-xl shadow-lg">
-        <div class="bg-blue-600 text-white p-6 rounded-t-xl">
-            <div class="flex justify-between items-center">
-                <h1 class="text-2xl font-bold">טופס פנייה חכם</h1>
-                <div class="flex items-center gap-3">
-                    <span id="userFullName" class="text-sm"></span>
-                    <div class="w-10 h-10 rounded-full bg-white text-blue-600 flex items-center justify-center font-bold text-xl" id="userAvatar"></div>
-                    <button id="logoutBtn" class="text-sm hover:text-blue-200 transition-colors">
-                        <i class="fas fa-sign-out-alt"></i>
-                        התנתק
-                    </button>
+
+<!-- Stage 2: Review and Submit -->
+<div id="stage2" class="hidden p-6 space-y-6">
+    <form id="caseForm" class="space-y-6">
+        <!-- Location Section -->
+        <div class="bg-gray-50 p-4 rounded-lg card-hover section-fade">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold flex items-center gap-2">
+                    <i class="fas fa-map-marker-alt text-blue-600"></i>
+                    פרטי מיקום
+                </h2>
+            </div>
+            <div class="grid md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium mb-2">
+                        <i class="fas fa-compass text-gray-400 mr-1"></i>
+                        מיקום כללי של אירוע
+                    </label>
+                    <select id="locationType" name="locationType" 
+                        class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 transition-all">
+                        <option value="בחוץ">בחוץ</option>
+                        <option value="בפנים">בפנים</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">
+                        <i class="fas fa-road text-gray-400 mr-1"></i>
+                        רחוב
+                    </label>
+                    <input type="text" id="street" name="street" 
+                        class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 transition-all">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">
+                        <i class="fas fa-city text-gray-400 mr-1"></i>
+                        עיר
+                    </label>
+                    <input type="text" id="city" name="city" 
+                        class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 transition-all">
                 </div>
             </div>
         </div>
 
-            <!-- Stage 1: Initial Input -->
-            <div id="stage1" class="p-6 space-y-6">
-                <!-- Image Upload -->
-                <div class="bg-gray-50 p-4 rounded-lg">
-                    <h2 class="text-xl font-semibold mb-4 flex items-center gap-2">
-                        <i class="fas fa-camera text-blue-600"></i>
-                        העלאת תמונה
-                    </h2>
-                    <div class="flex flex-col items-center">
-                        <div id="imagePreview" class="w-full h-48 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center mb-4 bg-gray-100">
-                            <div id="uploadPrompt" class="text-center p-4">
-                                <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-2"></i>
-                                <p>גרור תמונה לכאן או לחץ לבחירה</p>
-                            </div>
-                            <img id="previewImg" class="hidden max-h-full max-w-full object-contain" />
-                        </div>
-                        <input type="file" id="imageInput" accept="image/*" class="hidden">
-                    </div>
+        <!-- Event Details Section -->
+        <div class="bg-gray-50 p-4 rounded-lg card-hover section-fade" style="animation-delay: 0.2s">
+            <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+                <i class="fas fa-info-circle text-blue-600"></i>
+                פרטי האירוע
+            </h2>
+            <div class="grid md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium mb-2">
+                        <i class="fas fa-tag text-gray-400 mr-1"></i>
+                        נושא אירוע
+                    </label>
+                    <select id="category" name="category" 
+                        class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 transition-all">
+                        <option value="חשמל">חשמל</option>
+                        <option value="כביש">כביש</option>
+                        <option value="ריהוט">ריהוט</option>
+                        <option value="אירוע רפואי">אירוע רפואי</option>
+                        <option value="אחר">אחר</option>
+                    </select>
                 </div>
-
-                <!-- Location Section -->
-                <div class="bg-gray-50 p-4 rounded-lg">
-                    <div class="flex justify-between items-center mb-4">
-                        <h2 class="text-xl font-semibold flex items-center gap-2">
-                            <i class="fas fa-map-marker-alt text-blue-600"></i>
-                            מיקום
-                        </h2>
-                        <button type="button" id="getLocation" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2">
-                            <i class="fas fa-location-arrow"></i>
-                            זהה מיקום
-                        </button>
-                    </div>
-                    <div id="locationStatus" class="mb-4 hidden p-2 rounded"></div>
-                    <div id="locationDetails" class="grid gap-2"></div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">
+                        <i class="fas fa-exclamation-triangle text-gray-400 mr-1"></i>
+                        רמת דחיפות
+                    </label>
+                    <select id="urgency" name="urgency" 
+                        class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 transition-all">
+                        <option value="קל">קל</option>
+                        <option value="בינוני">בינוני</option>
+                        <option value="דחוף">דחוף</option>
+                    </select>
                 </div>
-
-                <!-- Description Input -->
-                <div class="bg-gray-50 p-4 rounded-lg">
-                    <h2 class="text-xl font-semibold mb-4 flex items-center gap-2">
-                        <i class="fas fa-comment text-blue-600"></i>
-                        תיאור הפנייה
-                    </h2>
-                    <textarea id="caseDescription" rows="4" class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500" 
-                        placeholder="תאר את הפנייה שלך..."></textarea>
-                </div>
-
-                <!-- Analyze Button -->
-                <div class="flex justify-center">
-                    <button id="analyzeButton" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition duration-200 flex items-center gap-2">
-                        <i class="fas fa-magic"></i>
-                        נתח פנייה
-                    </button>
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium mb-2">
+                        <i class="fas fa-comment text-gray-400 mr-1"></i>
+                        תיאור אירוע
+                    </label>
+                    <textarea id="description" name="description" rows="4" 
+                        class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 transition-all"></textarea>
                 </div>
             </div>
+        </div>
 
-            <!-- Stage 2: Review and Submit -->
-            <div id="stage2" class="hidden p-6 space-y-6">
-                <form id="caseForm" class="space-y-6">
-                    <!-- Location Section -->
-                    <div class="bg-gray-50 p-4 rounded-lg">
-                        <div class="flex justify-between items-center mb-4">
-                            <h2 class="text-xl font-semibold flex items-center gap-2">
-                                <i class="fas fa-map-marker-alt text-blue-600"></i>
-                                פרטי מיקום
-                            </h2>
-                        </div>
-                        <div class="grid md:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium mb-2">
-                                    <i class="fas fa-compass text-gray-400 mr-1"></i>
-                                    מיקום כללי של אירוע
-                                </label>
-                                <select id="locationType" name="locationType" class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
-                                    <option value="בחוץ">בחוץ</option>
-                                    <option value="בפנים">בפנים</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium mb-2">
-                                    <i class="fas fa-road text-gray-400 mr-1"></i>
-                                    רחוב
-                                </label>
-                                <input type="text" id="street" name="street" class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium mb-2">
-                                    <i class="fas fa-city text-gray-400 mr-1"></i>
-                                    עיר
-                                </label>
-                                <input type="text" id="city" name="city" class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
-                            </div>
-                        </div>
-                    </div>
+        <!-- Department Section -->
+        <div class="bg-gray-50 p-4 rounded-lg card-hover section-fade" style="animation-delay: 0.4s">
+            <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+                <i class="fas fa-building text-blue-600"></i>
+                פרטי מחלקה
+            </h2>
+            <div class="grid md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium mb-2">
+                        <i class="fas fa-building text-gray-400 mr-1"></i>
+                        מחלקה מטפלת
+                    </label>
+                    <input type="text" id="department" name="department" 
+                        class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 transition-all">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">
+                        <i class="fas fa-users text-gray-400 mr-1"></i>
+                        סוג פונה
+                    </label>
+                    <input type="text" id="reporterType" name="reporterType" 
+                        class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 transition-all">
+                </div>
+            </div>
+        </div>
 
-                    <!-- Event Details Section -->
-                    <div class="bg-gray-50 p-4 rounded-lg">
-                        <h2 class="text-xl font-semibold mb-4 flex items-center gap-2">
-                            <i class="fas fa-info-circle text-blue-600"></i>
-                            פרטי האירוע
-                        </h2>
-                        <div class="grid md:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium mb-2">
-                                    <i class="fas fa-tag text-gray-400 mr-1"></i>
-                                    נושא אירוע
-                                </label>
-                                <select id="category" name="category" class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
-                                    <option value="חשמל">חשמל</option>
-                                    <option value="כביש">כביש</option>
-                                    <option value="ריהוט">ריהוט</option>
-                                    <option value="אירוע רפואי">אירוע רפואי</option>
-                                    <option value="אחר">אחר</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium mb-2">
-                                    <i class="fas fa-exclamation-triangle text-gray-400 mr-1"></i>
-                                    רמת דחיפות
-                                </label>
-                                <select id="urgency" name="urgency" class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
-                                    <option value="קל">קל</option>
-                                    <option value="בינוני">בינוני</option>
-                                    <option value="דחוף">דחוף</option>
-                                </select>
-                            </div>
-                            <div class="md:col-span-2">
-                                <label class="block text-sm font-medium mb-2">
-                                    <i class="fas fa-comment text-gray-400 mr-1"></i>
-                                    תיאור אירוע
-                                </label>
-                                <textarea id="description" name="description" rows="4" 
-                                    class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500"></textarea>
-                            </div>
-                        </div>
-                    </div>
+        <!-- Contact Details Section -->
+        <div class="bg-gray-50 p-4 rounded-lg card-hover section-fade" style="animation-delay: 0.6s">
+            <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+                <i class="fas fa-user text-blue-600"></i>
+                פרטי פונה
+            </h2>
+            <div class="grid md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium mb-2">
+                        <i class="fas fa-user text-gray-400 mr-1"></i>
+                        שם פרטי
+                    </label>
+                    <input type="text" id="contactFirstName" name="firstName" 
+                        class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 transition-all">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">
+                        <i class="fas fa-user text-gray-400 mr-1"></i>
+                        שם משפחה
+                    </label>
+                    <input type="text" id="contactLastName" name="lastName" 
+                        class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 transition-all">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">
+                        <i class="fas fa-envelope text-gray-400 mr-1"></i>
+                        אימייל
+                    </label>
+                    <input type="email" id="contactEmail" name="email" 
+                        class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 transition-all">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">
+                        <i class="fas fa-phone text-gray-400 mr-1"></i>
+                        טלפון
+                    </label>
+                    <input type="tel" id="contactPhone" name="phone" 
+                        class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 transition-all">
+                </div>
+            </div>
+        </div>
 
-                    <!-- Department Section -->
-                    <div class="bg-gray-50 p-4 rounded-lg">
-                        <h2 class="text-xl font-semibold mb-4 flex items-center gap-2">
-                            <i class="fas fa-building text-blue-600"></i>
-                            פרטי מחלקה
-                        </h2>
-                        <div class="grid md:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium mb-2">
-                                    <i class="fas fa-building text-gray-400 mr-1"></i>
-                                    מחלקה מטפלת
-                                </label>
-                                <input type="text" id="department" name="department" 
-                                    class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium mb-2">
-                                    <i class="fas fa-users text-gray-400 mr-1"></i>
-                                    סוג פונה
-                                </label>
-                                <input type="text" id="reporterType" name="reporterType" 
-                                    class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="bg-gray-50 p-4 rounded-lg">
-                        <h2 class="text-xl font-semibold mb-4 flex items-center gap-2">
-                            <i class="fas fa-user text-blue-600"></i>
-                            פרטי פונה
-                        </h2>
-                        <div class="grid md:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium mb-2">
-                                    <i class="fas fa-user text-gray-400 mr-1"></i>
-                                    שם פרטי
-                                </label>
-                                <input type="text" id="contactFirstName" name="firstName" 
-                                    class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium mb-2">
-                                    <i class="fas fa-user text-gray-400 mr-1"></i>
-                                    שם משפחה
-                                </label>
-                                <input type="text" id="contactLastName" name="lastName" 
-                                    class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium mb-2">
-                                    <i class="fas fa-envelope text-gray-400 mr-1"></i>
-                                    אימייל
-                                </label>
-                                <input type="email" id="contactEmail" name="email" 
-                                    class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium mb-2">
-                                    <i class="fas fa-phone text-gray-400 mr-1"></i>
-                                    טלפון
-                                </label>
-                                <input type="tel" id="contactPhone" name="phone" 
-                                    class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
-                            </div>
-                        </div>
-                    
-                    </div>
-                    <div class="flex justify-center gap-4">
-                        <button type="button" id="backButton" 
-                            class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-6 rounded-lg transition duration-200 flex items-center gap-2">
-                            <i class="fas fa-arrow-right"></i>
-                            חזור
-                        </button>
-                        <button type="submit" 
-                            class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition duration-200 flex items-center gap-2">
-                            <i class="fas fa-paper-plane"></i>
-                            שלח טופס
-                        </button>
-                    </div>
-                </form>
+        <!-- Form Buttons -->
+        <div class="flex justify-center gap-4">
+            <button type="button" id="backButton" 
+                class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-6 rounded-lg transition-all flex items-center gap-2 shadow hover:shadow-lg">
+                <i class="fas fa-arrow-right"></i>
+                חזור
+            </button>
+            <button type="submit" 
+                class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition-all flex items-center gap-2 shadow-lg hover:shadow-xl">
+                <i class="fas fa-paper-plane"></i>
+                שלח טופס
+            </button>
+        </div>
+    </form>
+</div>
             </div>
         </div>
     </div>
-
     <script>
     // Global variables to store data
     let currentImage = null;
