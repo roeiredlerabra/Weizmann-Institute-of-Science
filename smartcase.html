@@ -317,6 +317,14 @@
                 </div>
                 <div>
                     <label class="block text-sm font-medium mb-2">
+                        <i class="fas fa-building text-gray-400 mr-1"></i>
+                        בניין
+                    </label>
+                    <input type="text" id="buildingName" name="buildingName" 
+                        class="w-full p-2 border rounded-lg bg-gray-50 focus:ring-2 focus:ring-blue-500 transition-all">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">
                         <i class="fas fa-road text-gray-400 mr-1"></i>
                         רחוב
                     </label>
@@ -1053,185 +1061,200 @@ function updateMapWithBuilding(buildingData) {
 
 // Analyze Button Handler
 document.getElementById('analyzeButton').addEventListener('click', async function() {
+    console.log('Starting analysis...');
+
+    // Validations
     if (!currentImage) {
+        console.log('Validation failed: No image');
         alert('נא להעלות תמונה');
         return;
     }
     if (!currentLocation) {
+        console.log('Validation failed: No location');
         alert('נא לזהות מיקום');
         return;
     }
     if (!document.getElementById('caseDescription').value.trim()) {
+        console.log('Validation failed: No description');
         alert('נא להזין תיאור פנייה');
         return;
     }
+
+    console.log('Initial validations passed');
+    console.log('Current Location:', currentLocation);
+    console.log('Selected Building Data:', selectedBuildingData);
 
     this.disabled = true;
     this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> מנתח...';
 
     try {
         // Convert image to base64
+        console.log('Converting image to base64...');
         const imageBase64 = await new Promise((resolve) => {
             const reader = new FileReader();
             reader.onloadend = () => resolve(reader.result.split(',')[1]);
             reader.readAsDataURL(currentImage);
         });
+        console.log('Image conversion completed');
 
         // Create structured data for analysis
-// Create structured data for analysis
-const analysisData = {
-    image: {
-        data: imageBase64,
-        filename: currentImage.name,
-        contentType: currentImage.type
-    },
-    location: {
-        coordinates: {
-            lat: Number(currentLocation.lat),
-            lon: Number(currentLocation.lon)
-        },
-        address: {
-            street: currentLocation.address?.road || '',
-            city: currentLocation.address?.city || currentLocation.address?.town || '',
-            formatted_address: currentLocation.display_name || ''
+        const analysisData = {
+            image: {
+                data: imageBase64,
+                filename: currentImage.name,
+                contentType: currentImage.type
+            },
+            location: {
+                coordinates: {
+                    lat: Number(currentLocation.lat),
+                    lon: Number(currentLocation.lon)
+                },
+                address: {
+                    street: currentLocation.address?.road || '',
+                    city: currentLocation.address?.city || currentLocation.address?.town || '',
+                    formatted_address: currentLocation.display_name || ''
+                }
+            },
+            description: document.getElementById('caseDescription').value,
+            metadata: {
+                timestamp: new Date().toISOString(),
+                source: 'web-form'
+            }
+        };
+
+        // Add building data if available
+        if (selectedBuildingData) {
+            console.log('Adding building data to analysis...');
+            analysisData.building = {
+                id: selectedBuildingData.id,
+                type: selectedBuildingData.type,
+                name: selectedBuildingData.tags?.name || '',
+                name_he: selectedBuildingData.tags?.['name:he'] || '',
+                name_en: selectedBuildingData.tags?.['name:en'] || selectedBuildingData.tags?.['name:en2'] || '',
+                levels: selectedBuildingData.tags?.['building:levels']
+            };
+
+            // Update coordinates to building center
+            let lat = 0, lon = 0, count = 0;
+            selectedBuildingData.geometry.forEach(point => {
+                lat += point.lat;
+                lon += point.lon;
+                count++;
+            });
+            
+            analysisData.location.coordinates = {
+                lat: lat / count,
+                lon: lon / count
+            };
+            console.log('Building data added successfully');
         }
-    },
-    description: document.getElementById('caseDescription').value,
-    metadata: {
-        timestamp: new Date().toISOString(),
-        source: 'web-form'
-    }
-};
 
-// Add selected building details if available
-const selectedBuilding = document.getElementById('nearbyBuildings').value;
-if (selectedBuilding) {
-    try {
-        const buildingData = JSON.parse(selectedBuilding);
-        analysisData.building = {
-            id: buildingData.id,
-            type: buildingData.type,
-            name: buildingData.tags?.name || '',
-            name_he: buildingData.tags?.['name:he'] || '',
-            name_en: buildingData.tags?.['name:en'] || buildingData.tags?.['name:en2'] || '',
-            levels: buildingData.tags?.['building:levels']
-        };
+        console.log('Analysis Data:', analysisData);
 
-        // Update location coordinates to building center if building is selected
-        let lat = 0, lon = 0, count = 0;
-        buildingData.geometry.forEach(point => {
-            lat += point.lat;
-            lon += point.lon;
-            count++;
+        console.log('Sending request to analysis API...');
+        const response = await fetch('https://prod-02.northeurope.logic.azure.com:443/workflows/d9dba3d45cfb43bb88ee75d80662afac/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=5gmD4CitJbzzdYcOm7TDX-RAvITu6viyFd7uHd1EKuU', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(analysisData)
         });
-        
-        analysisData.location.coordinates = {
-            lat: lat / count,
-            lon: lon / count
-        };
-    } catch (error) {
-        console.error('Error parsing building data:', error);
-    }
-}
-
-const response = await fetch('https://prod-02.northeurope.logic.azure.com:443/workflows/d9dba3d45cfb43bb88ee75d80662afac/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=5gmD4CitJbzzdYcOm7TDX-RAvITu6viyFd7uHd1EKuU', {
-    method: 'POST',
-    headers: {
-        'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(analysisData)
-});
 
         if (!response.ok) {
             const errorData = await response.json().catch(() => null);
+            console.error('API Response Error:', errorData);
             throw new Error(errorData?.message || 'שגיאה בניתוח הפנייה');
         }
 
         const responseData = await response.json();
+        console.log('API Response:', responseData);
         
-        // Direct access to the analysis data
-        const analysisResult = responseData;
-        
-        if (!analysisResult.success) {
+        if (!responseData.success) {
             throw new Error('ניתוח הפנייה נכשל');
         }
 
-        // Switch to Stage 2 and prepare form
+        console.log('Switching to Stage 2...');
         document.getElementById('stage1').classList.add('hidden');
         const stage2 = document.getElementById('stage2');
         stage2.classList.remove('hidden');
 
-        // Populate Stage 2 form with analysis results
-        const analysis = analysisResult.analysis;
-        
-        // Populate location fields
-        document.getElementById('locationType').value = analysis.location.type;
-        document.getElementById('street').value = analysis.location.address.street || currentLocation.address?.road || '';
-        document.getElementById('city').value = analysis.location.address.city || currentLocation.address?.city || '';
+        // Small delay to ensure DOM is updated
+        setTimeout(() => {
+            console.log('Populating Stage 2 form...');
+            const analysis = responseData.analysis;
+            
+            try {
+                // Populate location fields
+                document.getElementById('locationType').value = analysis.location.type;
+                document.getElementById('buildingName').value = selectedBuildingData ? 
+                    (selectedBuildingData.tags['name:he'] || selectedBuildingData.tags.name || '') : '';
+                document.getElementById('street').value = analysis.location.address.street || currentLocation.address?.road || '';
+                document.getElementById('city').value = analysis.location.address.city || currentLocation.address?.city || '';
+                
+                // Populate event details
+                document.getElementById('category').value = analysis.event.category;
+                document.getElementById('urgency').value = analysis.event.urgency;
 
-        // Populate event details
-        document.getElementById('category').value = analysis.event.category;
-        document.getElementById('urgency').value = analysis.event.urgency;
+                // Build description text
+                let descriptionText = analysis.event.description;
+                if (analysis.event.detected_objects?.length > 0) {
+                    descriptionText += '\n\nזוהו בתמונה:\n';
+                    descriptionText += analysis.event.detected_objects.map(obj => 
+                        `• ${typeof obj === 'string' ? obj : obj.item}`
+                    ).join('\n');
+                }
+                document.getElementById('description').value = descriptionText;
 
-        // Build description text with detected objects
-        let descriptionText = analysis.event.description;
-        if (analysis.event.detected_objects && analysis.event.detected_objects.length > 0) {
-            descriptionText += '\n\nזוהו בתמונה:\n';
-            if (Array.isArray(analysis.event.detected_objects)) {
-                // If detected_objects is an array of strings
-                descriptionText += analysis.event.detected_objects.map(obj => 
-                    `• ${typeof obj === 'string' ? obj : obj.item}`
-                ).join('\n');
+                // Populate department fields
+                document.getElementById('department').value = analysis.automatic_fields.department;
+                document.getElementById('reporterType').value = analysis.automatic_fields.reporter_type;
+
+                // Update confidence indicator
+                console.log('Updating confidence indicator...');
+                const firstSection = stage2.querySelector('.bg-gray-50');
+                let confidenceContainer = document.getElementById('confidenceIndicator');
+                
+                if (!confidenceContainer) {
+                    confidenceContainer = document.createElement('div');
+                    confidenceContainer.id = 'confidenceIndicator';
+                    firstSection.appendChild(confidenceContainer);
+                }
+
+                if (analysis.confidence_score > 0.8) {
+                    confidenceContainer.innerHTML = `
+                        <div class="space-y-2">
+                            <div class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm inline-flex items-center gap-1">
+                                <i class="fas fa-check-circle"></i>
+                                רמת דיוק גבוהה (${Math.round(analysis.confidence_score * 100)}%)
+                            </div>
+                            ${analysis.suggested_department ? `
+                            <div class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm inline-flex items-center gap-1">
+                                <i class="fas fa-building"></i>
+                                מחלקה מוצעת: ${analysis.suggested_department}
+                            </div>
+                            ` : ''}
+                        </div>
+                    `;
+                } else {
+                    confidenceContainer.innerHTML = '';
+                }
+
+                console.log('Stage 2 form population completed successfully');
+            } catch (error) {
+                console.error('Error while populating form:', error);
+                throw error;
             }
-        }
-        document.getElementById('description').value = descriptionText;
-
-        // Populate department fields
-        document.getElementById('department').value = analysis.automatic_fields.department;
-        document.getElementById('reporterType').value = analysis.automatic_fields.reporter_type;
-
-        // Add or update confidence score and suggested department indicator
-        const firstSection = stage2.querySelector('.bg-gray-50');
-        let confidenceContainer = document.getElementById('confidenceIndicator');
-        
-        if (!confidenceContainer) {
-            confidenceContainer = document.createElement('div');
-            confidenceContainer.id = 'confidenceIndicator';
-            firstSection.appendChild(confidenceContainer);
-        }
-
-        if (analysis.confidence_score > 0.8) {
-            confidenceContainer.innerHTML = `
-                <div class="space-y-2">
-                    <div class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm inline-flex items-center gap-1">
-                        <i class="fas fa-check-circle"></i>
-                        רמת דיוק גבוהה (${Math.round(analysis.confidence_score * 100)}%)
-                    </div>
-                    ${analysis.suggested_department ? `
-                    <div class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm inline-flex items-center gap-1">
-                        <i class="fas fa-building"></i>
-                        מחלקה מוצעת: ${analysis.suggested_department}
-                    </div>
-                    ` : ''}
-                </div>
-            `;
-        } else {
-            confidenceContainer.innerHTML = '';
-        }
-
-        // Add raw analysis data display if needed for debugging
-        if (analysis.raw_image_analysis && analysis.raw_image_analysis.labels) {
-            console.log('זיהוי תמונה:', analysis.raw_image_analysis.labels);
-        }
+        }, 0);
 
     } catch (error) {
+        console.error('Analysis failed:', error);
         alert('שגיאה בניתוח הפנייה: ' + error.message);
     } finally {
         this.disabled = false;
         this.innerHTML = '<i class="fas fa-magic"></i> נתח פנייה';
+        console.log('Analysis process completed');
     }
-});  
-
+});
 
 
 
