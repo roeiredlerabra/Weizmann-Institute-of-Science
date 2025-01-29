@@ -21,7 +21,73 @@
     border-radius: 0.5rem;
     overflow: hidden;
 }
+.buildings-dropdown {
+    width: 100%;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    overflow: visible; /* Changed from hidden to allow dropdown to show */
+    position: relative;
+    z-index: 1000;
+    display: none; /* Hide by default */
+}
 
+.buildings-header {
+    padding: 15px;
+    font-size: 16px;
+    font-weight: bold;
+    background: #3b82f6;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.buildings-header:hover {
+    background: #2563eb;
+}
+
+.buildings-content {
+    display: none;
+    max-height: 300px;
+    overflow-y: auto;
+    position: absolute; /* Changed from fixed */
+    width: 100%; /* Changed from 50% */
+    top: 100%; /* Position right below header */
+    left: 0;
+    background: white;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 0 0 10px 10px;
+}
+
+.building-item {
+    padding: 12px;
+    border-bottom: 1px solid #eee;
+    font-size: 14px;
+    color: #333;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.building-item small {
+    display: block;
+    color: #666;
+    margin-top: 4px;
+}
+
+.building-item:hover {
+    background: #f0f0f5;
+}
+
+.building-item:last-child {
+    border-bottom: none;
+}
+
+/* Add some space between building name and small text */
+.building-item > div:not(:last-child) {
+    margin-bottom: 4px;
+}
 .leaflet-container {
     width: 100%;
     height: 100%;
@@ -173,6 +239,7 @@
         </div>
     </div>
 
+
     <!-- Location Section -->
     <div class="bg-gray-50 p-4 rounded-lg card-hover section-fade" style="animation-delay: 0.2s">
         <div class="flex justify-between items-center mb-4">
@@ -180,17 +247,19 @@
                 <i class="fas fa-map-marker-alt text-blue-600"></i>
                 מיקום
             </h2>
-            <div class="flex gap-2">
-                <select id="nearbyBuildings" class="p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 transition-all text-sm">
-                    <option value="">בחר בניין קרוב</option>
-                </select>
-                <button type="button" id="getLocation" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-all shadow hover:shadow-lg">
-                    <i class="fas fa-location-arrow"></i>
-                    זהה מיקום
-                </button>
-            </div>
+            <button type="button" id="getLocation" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-all shadow hover:shadow-lg">
+                <i class="fas fa-location-arrow"></i>
+                זהה מיקום
+            </button>
         </div>
         <div id="locationStatus" class="mb-4 hidden p-2 rounded"></div>
+        <div class="buildings-dropdown w-full mb-4">
+            <div class="buildings-header">
+                <span id="selectedBuildingText">בחר בניין קרוב</span>
+                <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="buildings-content" id="buildingsContent"></div>
+        </div>
         <div id="locationDetails" class="grid gap-2"></div>
         <div class="map-container">
             <div id="map" style="width: 100%; height: 100%;"></div>
@@ -528,6 +597,11 @@ document.getElementById('getLocation').addEventListener('click', function() {
                 if (currentMarker) {
                     map.removeLayer(currentMarker);
                 }
+                // Clear any existing building polygon
+                if (currentBuildingPolygon) {
+                    map.removeLayer(currentBuildingPolygon);
+                }
+                
                 map.setView([lat, lon], 18);
                 currentMarker = L.marker([lat, lon]).addTo(map);
 
@@ -574,40 +648,11 @@ document.getElementById('getLocation').addEventListener('click', function() {
                     if (!buildingsResponse.ok) throw new Error('שגיאה בטעינת בניינים קרובים');
                     const buildingsData = await buildingsResponse.json();
 
-                    // Update dropdown
-                    const dropdown = document.getElementById('nearbyBuildings');
-                    dropdown.innerHTML = '<option value="">בחר בניין קרוב</option>';
+                    // Use the new populate function instead of direct dropdown manipulation
+                    populateBuildingsDropdown(buildingsData.elements);
+                    
+                    showStatus('המיקום זוהה בהצלחה' + (buildingsData.elements.length > 0 ? ' ונמצאו בניינים בקרבת מקום' : ''));
 
-                    if (buildingsData.elements.length > 0) {
-                        buildingsData.elements.forEach(building => {
-                            if (building.tags) {
-                                const name = building.tags.name || '';
-                                const nameHe = building.tags['name:he'] || '';
-                                const nameEn = building.tags['name:en'] || building.tags['name:en2'] || '';
-                                
-                                if (name || nameHe || nameEn) {
-                                    const option = document.createElement('option');
-                                    option.value = JSON.stringify({
-                                        id: building.id,
-                                        type: building.type,
-                                        geometry: building.geometry,
-                                        tags: building.tags
-                                    });
-                                    
-                                    const displayTexts = [];
-                                    if (nameHe) displayTexts.push(nameHe);
-                                    if (nameEn) displayTexts.push(nameEn);
-                                    if (name && !displayTexts.includes(name)) displayTexts.push(name);
-                                    
-                                    option.textContent = displayTexts.join(' | ');
-                                    dropdown.appendChild(option);
-                                }
-                            }
-                        });
-                        showStatus('המיקום זוהה בהצלחה ונמצאו בניינים בקרבת מקום');
-                    } else {
-                        showStatus('המיקום זוהה בהצלחה - לא נמצאו בניינים בקרבת מקום');
-                    }
                 } catch (error) {
                     showStatus('שגיאה בקבלת פרטי המיקום', 'error');
                     console.error('Error:', error);
@@ -633,7 +678,6 @@ document.getElementById('getLocation').addEventListener('click', function() {
         showStatus('הדפדפן אינו תומך בשירותי מיקום', 'error');
     }
 });
-
 // Add click handler for map
 // Add click handler for map
 map.on('click', function(e) {
@@ -643,6 +687,11 @@ map.on('click', function(e) {
     if (currentMarker) {
         map.removeLayer(currentMarker);
     }
+    // Clear any existing building polygon
+    if (currentBuildingPolygon) {
+        map.removeLayer(currentBuildingPolygon);
+    }
+    
     currentMarker = L.marker([lat, lng]).addTo(map);
     
     // First, reverse geocode the clicked location
@@ -682,47 +731,14 @@ map.on('click', function(e) {
 
                 const buildingsData = await buildingsResponse.json();
                 
-                // Update the buildings dropdown
-                const dropdown = document.getElementById('nearbyBuildings');
-                dropdown.innerHTML = '<option value="">בחר בניין קרוב</option>';
-
-                buildingsData.elements.forEach(building => {
-                    if (building.tags) {
-                        const name = building.tags.name || '';
-                        const nameHe = building.tags['name:he'] || '';
-                        const nameEn = building.tags['name:en'] || building.tags['name:en2'] || '';
-                        
-                        if (name || nameHe || nameEn) {
-                            const option = document.createElement('option');
-                            option.value = JSON.stringify({
-                                id: building.id,
-                                type: building.type,
-                                geometry: building.geometry,
-                                tags: building.tags
-                            });
-                            
-                            const displayTexts = [];
-                            if (nameHe) displayTexts.push(nameHe);
-                            if (nameEn) displayTexts.push(nameEn);
-                            if (name && !displayTexts.includes(name)) displayTexts.push(name);
-                            
-                            option.textContent = displayTexts.join(' | ');
-                            dropdown.appendChild(option);
-                        }
-                    }
-                });
-
-                // Clear any existing building polygon
-                if (currentBuildingPolygon) {
-                    map.removeLayer(currentBuildingPolygon);
-                }
+                // Use the new populate function
+                populateBuildingsDropdown(buildingsData.elements);
 
             } catch (error) {
                 console.error('Error fetching nearby buildings:', error);
             }
         });
 });
-
 // Fetch nearby buildings function
 async function fetchNearbyBuildings() {
     try {
@@ -780,14 +796,98 @@ async function fetchNearbyBuildings() {
         console.error('Error fetching nearby buildings:', error);
     }
 }
+// Global variables for dropdown functionality
+let selectedBuildingData = null;
+let currentBuildingPolygon = null;
 
-// Add event listener for the dropdown
-document.getElementById('nearbyBuildings').addEventListener('change', function() {
-    if (!this.value) return;
+// Dropdown click handler
+document.querySelector('.buildings-header').addEventListener('click', function(e) {
+    e.stopPropagation(); // Prevent event from bubbling up
+    const content = document.querySelector('.buildings-content');
+    content.style.display = content.style.display === 'none' ? 'block' : 'none';
+});
+
+// Close dropdown when clicking outside
+document.addEventListener('click', function(event) {
+    const dropdown = document.querySelector('.buildings-dropdown');
+    const content = document.querySelector('.buildings-content');
+    if (!dropdown.contains(event.target)) {
+        content.style.display = 'none';
+    }
+});
+
+function populateBuildingsDropdown(buildings) {
+    const buildingsContent = document.getElementById('buildingsContent');
+    const buildingsDropdown = document.querySelector('.buildings-dropdown');
+    buildingsContent.innerHTML = '';
     
-    const buildingData = JSON.parse(this.value);
+    // Filter buildings that have names
+    const namedBuildings = buildings.filter(building => {
+        const tags = building.tags || {};
+        return tags.name || tags['name:he'] || tags['name:en'] || tags['name:en2'];
+    });
+
+    // If no named buildings found, keep dropdown hidden
+    if (namedBuildings.length === 0) {
+        buildingsDropdown.style.display = 'none';
+        return;
+    }
+
+    // Show the dropdown if we have buildings
+    buildingsDropdown.style.display = 'block';
     
-    // Calculate center point of the building
+    // Add default option
+    const defaultItem = document.createElement('div');
+    defaultItem.className = 'building-item';
+    defaultItem.innerHTML = 'בחר בניין';
+    defaultItem.addEventListener('click', () => {
+        document.getElementById('selectedBuildingText').textContent = 'בחר בניין קרוב';
+        if (currentBuildingPolygon) {
+            map.removeLayer(currentBuildingPolygon);
+        }
+        selectedBuildingData = null;
+        document.querySelector('.buildings-content').style.display = 'none';
+    });
+    buildingsContent.appendChild(defaultItem);
+
+    // Add building options
+    namedBuildings.forEach(building => {
+        const name = building.tags.name || '';
+        const nameHe = building.tags['name:he'] || '';
+        const nameEn = building.tags['name:en'] || building.tags['name:en2'] || '';
+        const levels = building.tags['building:levels'];
+        
+        const buildingDiv = document.createElement('div');
+        buildingDiv.className = 'building-item';
+        
+        const mainName = nameHe || name;
+        const secondaryName = nameEn || '';
+        
+        buildingDiv.innerHTML = `
+            <div>${mainName}</div>
+            ${secondaryName ? `<small>${secondaryName}</small>` : ''}
+            ${levels ? `<small>קומות: ${levels}</small>` : ''}
+        `;
+
+        buildingDiv.addEventListener('click', () => {
+            selectedBuildingData = {
+                id: building.id,
+                type: building.type,
+                geometry: building.geometry,
+                tags: building.tags
+            };
+            
+            document.getElementById('selectedBuildingText').textContent = mainName;
+            document.querySelector('.buildings-content').style.display = 'none';
+            updateMapWithBuilding(selectedBuildingData);
+        });
+        
+        buildingsContent.appendChild(buildingDiv);
+    });
+}
+
+function updateMapWithBuilding(buildingData) {
+    // Calculate center point
     let lat = 0, lon = 0, count = 0;
     buildingData.geometry.forEach(point => {
         lat += point.lat;
@@ -800,7 +900,7 @@ document.getElementById('nearbyBuildings').addEventListener('change', function()
         lon: lon / count
     };
 
-    // Update map
+    // Update map view and marker
     if (currentMarker) {
         map.removeLayer(currentMarker);
     }
@@ -828,13 +928,90 @@ document.getElementById('nearbyBuildings').addEventListener('change', function()
         <div class="text-sm">
             <strong>שם באנגלית:</strong> ${tags['name:en'] || tags['name:en2'] || ''}
         </div>
+        ${tags['building:levels'] ? `
         <div class="text-sm">
-            <strong>קומות:</strong> ${tags['building:levels'] || 'לא ידוע'}
+            <strong>קומות:</strong> ${tags['building:levels']}
         </div>
+        ` : ''}
     `;
-});
+
+    // Update currentLocation with building center
+    currentLocation = {
+        lat: center.lat,
+        lon: center.lon,
+        address: {
+            road: tags['addr:street'] || '',
+            city: tags['addr:city'] || 'רחובות',
+            building: tags['name:he'] || tags.name || ''
+        },
+        display_name: `${tags['name:he'] || tags.name || ''}, ${tags['addr:street'] || ''}, רחובות`
+    };
+}
+function updateMapWithBuilding(buildingData) {
+    // Calculate center point
+    let lat = 0, lon = 0, count = 0;
+    buildingData.geometry.forEach(point => {
+        lat += point.lat;
+        lon += point.lon;
+        count++;
+    });
+    
+    const center = {
+        lat: lat / count,
+        lon: lon / count
+    };
+
+    // Update map view and marker
+    if (currentMarker) {
+        map.removeLayer(currentMarker);
+    }
+    if (currentBuildingPolygon) {
+        map.removeLayer(currentBuildingPolygon);
+    }
+    
+    map.setView([center.lat, center.lon], 19);
+    currentMarker = L.marker([center.lat, center.lon]).addTo(map);
+    
+    // Draw building polygon
+    const polygonPoints = buildingData.geometry.map(point => [point.lat, point.lon]);
+    currentBuildingPolygon = L.polygon(polygonPoints, {
+        color: '#3b82f6',
+        weight: 2,
+        fillOpacity: 0.2
+    }).addTo(map);
+
+    // Update location details
+    const tags = buildingData.tags;
+    document.getElementById('locationDetails').innerHTML = `
+        <div class="text-sm">
+            <strong>בניין:</strong> ${tags['name:he'] || tags.name || ''}
+        </div>
+        <div class="text-sm">
+            <strong>שם באנגלית:</strong> ${tags['name:en'] || tags['name:en2'] || ''}
+        </div>
+        ${tags['building:levels'] ? `
+        <div class="text-sm">
+            <strong>קומות:</strong> ${tags['building:levels']}
+        </div>
+        ` : ''}
+    `;
+
+    // Update currentLocation with building center
+    currentLocation = {
+        lat: center.lat,
+        lon: center.lon,
+        address: {
+            road: tags['addr:street'] || '',
+            city: tags['addr:city'] || 'רחובות',
+            building: tags['name:he'] || tags.name || ''
+        },
+        display_name: `${tags['name:he'] || tags.name || ''}, ${tags['addr:street'] || ''}, רחובות`
+    };
+}
+// Add event listener for the dropdown
+
 // Add variable for building polygon
-let currentBuildingPolygon = null;
+// let currentBuildingPolygon = null; // This line is removed to avoid redeclaration
 
 // Call fetchNearbyBuildings when the page loads
 //window.addEventListener('load', fetchNearbyBuildings);
@@ -1085,6 +1262,8 @@ document.getElementById('caseForm').addEventListener('submit', async function(e)
         submitButton.innerHTML = '<i class="fas fa-paper-plane"></i> שלח טופס';
     }
 });   
+
+
     </script>
 </body>
 </html>
