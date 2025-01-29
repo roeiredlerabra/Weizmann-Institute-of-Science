@@ -20,6 +20,8 @@
     position: relative;
     border-radius: 0.5rem;
     overflow: hidden;
+    background: #f8f9fa; /* Light background color while tiles load */
+    min-height: 300px; /* Ensure minimum height even before content loads */
 }
 .buildings-dropdown {
     width: 100%;
@@ -89,8 +91,12 @@
     margin-bottom: 4px;
 }
 .leaflet-container {
-    width: 100%;
-    height: 100%;
+    width: 100% !important;
+    height: 100% !important;
+    background: #f8f9fa !important;
+}
+.leaflet-control-attribution{
+    visibility: hidden;
 }
         .animate-gradient {
             background-size: 200% 200%;
@@ -485,6 +491,7 @@ document.getElementById('contactLastName').value = dummyContactData.lastName;
 document.getElementById('contactEmail').value = dummyContactData.email;
 document.getElementById('contactPhone').value = dummyContactData.phone;
 // Login form handler
+// Modify the login form handler
 document.getElementById('loginForm').addEventListener('submit', function(e) {
     e.preventDefault();
     
@@ -494,7 +501,7 @@ document.getElementById('loginForm').addEventListener('submit', function(e) {
     // Demo login - accept any credentials
     currentUser = {
         username: username,
-        fullName: username // In real app this would come from the server
+        fullName: username
     };
     
     // Update UI for logged in user
@@ -505,10 +512,31 @@ document.getElementById('loginForm').addEventListener('submit', function(e) {
     document.getElementById('loginStage').classList.add('hidden');
     document.getElementById('mainApp').classList.remove('hidden');
     
+    // Force map to update after container becomes visible
+    setTimeout(() => {
+        map.invalidateSize();
+    }, 100);
+    
     // Store in sessionStorage
     sessionStorage.setItem('user', JSON.stringify(currentUser));
 });
 
+// Also update the session check
+window.addEventListener('load', function() {
+    const savedUser = sessionStorage.getItem('user');
+    if (savedUser) {
+        currentUser = JSON.parse(savedUser);
+        document.getElementById('userFullName').textContent = currentUser.fullName;
+        document.getElementById('userAvatar').textContent = currentUser.fullName.charAt(0);
+        document.getElementById('loginStage').classList.add('hidden');
+        document.getElementById('mainApp').classList.remove('hidden');
+        
+        // Force map to update after container becomes visible
+        setTimeout(() => {
+            map.invalidateSize();
+        }, 100);
+    }
+});
 // Logout handler
 document.getElementById('logoutBtn').addEventListener('click', function() {
     currentUser = null;
@@ -561,16 +589,23 @@ window.addEventListener('load', function() {
         reader.readAsDataURL(file);
     }
 
-// Initialize map
+// Initialize map with fallback tile servers
 const map = L.map('map').setView([31.7767, 35.2345], 13);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: ''
+    attribution: '© OpenStreetMap contributors',
+    maxZoom: 19,
+    // Add fallback servers
+    subdomains: ['a', 'b', 'c'],
+    // Add error handling
+    errorTileUrl: 'https://cdn.jsdelivr.net/gh/leaflet/leaflet@1.9.4/dist/images/marker-icon.png'
 }).addTo(map);
 
-// Force a map resize after initialization
-setTimeout(() => {
-    map.invalidateSize();
-}, 100);
+// Add a retry mechanism if tiles fail to load
+map.on('tileerror', function(e) {
+    setTimeout(() => {
+        e.tile.src = e.url;
+    }, 1000);
+});
 
 let currentMarker = null;
 
