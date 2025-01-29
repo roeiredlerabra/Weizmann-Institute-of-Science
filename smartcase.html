@@ -6,13 +6,26 @@
     <title>מערכת פניות חכמה | WizCity</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
     <style>
         @keyframes gradient {
             0% { background-position: 0% 50%; }
             50% { background-position: 100% 50%; }
             100% { background-position: 0% 50%; }
         }
+        .map-container {
+    width: 100%;
+    height: 400px;
+    position: relative;
+    border-radius: 0.5rem;
+    overflow: hidden;
+}
 
+.leaflet-container {
+    width: 100%;
+    height: 100%;
+}
         .animate-gradient {
             background-size: 200% 200%;
             animation: gradient 3s ease infinite;
@@ -167,13 +180,21 @@
                 <i class="fas fa-map-marker-alt text-blue-600"></i>
                 מיקום
             </h2>
-            <button type="button" id="getLocation" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-all shadow hover:shadow-lg">
-                <i class="fas fa-location-arrow"></i>
-                זהה מיקום
-            </button>
+            <div class="flex gap-2">
+                <select id="nearbyBuildings" class="p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 transition-all text-sm">
+                    <option value="">בחר בניין קרוב</option>
+                </select>
+                <button type="button" id="getLocation" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-all shadow hover:shadow-lg">
+                    <i class="fas fa-location-arrow"></i>
+                    זהה מיקום
+                </button>
+            </div>
         </div>
         <div id="locationStatus" class="mb-4 hidden p-2 rounded"></div>
         <div id="locationDetails" class="grid gap-2"></div>
+        <div class="map-container">
+            <div id="map" style="width: 100%; height: 100%;"></div>
+        </div>
     </div>
 
     <!-- Description Input -->
@@ -471,68 +492,352 @@ window.addEventListener('load', function() {
         reader.readAsDataURL(file);
     }
 
-    // Location Handler
-    document.getElementById('getLocation').addEventListener('click', function() {
-        const statusDiv = document.getElementById('locationStatus');
-        const detailsDiv = document.getElementById('locationDetails');
-        statusDiv.classList.remove('hidden');
+// Initialize map
+const map = L.map('map').setView([31.7767, 35.2345], 13);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap contributors'
+}).addTo(map);
 
-        function showStatus(message, type = 'info') {
-            statusDiv.innerHTML = `<i class="fas fa-${type === 'error' ? 'exclamation-triangle text-red-500' : 'info-circle text-blue-500'} mr-2"></i>${message}`;
-            statusDiv.className = `mb-4 p-2 rounded ${type === 'error' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'}`;
-        }
+// Force a map resize after initialization
+setTimeout(() => {
+    map.invalidateSize();
+}, 100);
 
-        if (navigator.geolocation) {
-            showStatus('<div class="animate-spin inline-block w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full mr-2"></div>מאתר את המיקום שלך...');
+let currentMarker = null;
 
-            navigator.geolocation.getCurrentPosition(
-                async function(position) {
-                    try {
-                        const response = await fetch(
-                            `https://nominatim.openstreetmap.org/reverse?lat=${position.coords.latitude}&lon=${position.coords.longitude}&format=json&accept-language=he`
-                        );
-                        
-                        if (!response.ok) throw new Error('שגיאה באיתור הכתובת');
+// Update the location handler
+document.getElementById('getLocation').addEventListener('click', function() {
+    const statusDiv = document.getElementById('locationStatus');
+    const detailsDiv = document.getElementById('locationDetails');
+    statusDiv.classList.remove('hidden');
 
-                        const data = await response.json();
-                        currentLocation = data;
-                        showStatus('המיקום זוהה בהצלחה');
-                        
-                        detailsDiv.innerHTML = `
-                            <div class="text-sm">
-                                <strong>כתובת:</strong> ${data.display_name}
-                            </div>
-                            <div class="text-sm">
-                                <strong>רחוב:</strong> ${data.address.road || 'לא זוהה'}
-                            </div>
-                            <div class="text-sm">
-                                <strong>עיר:</strong> ${data.address.city || data.address.town || 'לא זוהה'}
-                            </div>
-                        `;
-                    } catch (error) {
-                        showStatus('שגיאה בקבלת פרטי הכתובת', 'error');
-                    }
-                },
-                function(error) {
-                    let message = 'שגיאה בזיהוי המיקום';
-                    switch (error.code) {
-                        case error.PERMISSION_DENIED:
-                            message = 'אין הרשאה לקבלת מיקום';
-                            break;
-                        case error.POSITION_UNAVAILABLE:
-                            message = 'המיקום אינו זמין';
-                            break;
-                        case error.TIMEOUT:
-                            message = 'תם הזמן לקבלת המיקום';
-                            break;
-                    }
-                    showStatus(message, 'error');
+    function showStatus(message, type = 'info') {
+        statusDiv.innerHTML = `<i class="fas fa-${type === 'error' ? 'exclamation-triangle text-red-500' : 'info-circle text-blue-500'} mr-2"></i>${message}`;
+        statusDiv.className = `mb-4 p-2 rounded ${type === 'error' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'}`;
+    }
+
+    if (navigator.geolocation) {
+        showStatus('<div class="animate-spin inline-block w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full mr-2"></div>מאתר את המיקום שלך...');
+
+        navigator.geolocation.getCurrentPosition(
+            async function(position) {
+                const lat = position.coords.latitude;
+                const lon = position.coords.longitude;
+
+                // Update map and marker
+                if (currentMarker) {
+                    map.removeLayer(currentMarker);
                 }
-            );
-        } else {
-            showStatus('הדפדפן אינו תומך בשירותי מיקום', 'error');
+                map.setView([lat, lon], 18);
+                currentMarker = L.marker([lat, lon]).addTo(map);
+
+                try {
+                    // Get location details
+                    const locationResponse = await fetch(
+                        `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=he`
+                    );
+                    
+                    if (!locationResponse.ok) throw new Error('שגיאה באיתור הכתובת');
+                    const locationData = await locationResponse.json();
+                    currentLocation = locationData;
+
+                    // Update location details
+                    detailsDiv.innerHTML = `
+                        <div class="text-sm">
+                            <strong>כתובת:</strong> ${locationData.display_name}
+                        </div>
+                        <div class="text-sm">
+                            <strong>רחוב:</strong> ${locationData.address.road || 'לא זוהה'}
+                        </div>
+                        <div class="text-sm">
+                            <strong>עיר:</strong> ${locationData.address.city || locationData.address.town || 'לא זוהה'}
+                        </div>
+                    `;
+
+                    // Fetch nearby buildings
+                    const buildingsUrl = 'https://overpass-api.de/api/interpreter';
+                    const buildingsQuery = `data=[out:json];
+                    (
+                        way["building"](around:100,${lat},${lon});
+                        relation["building"](around:100,${lat},${lon});
+                    );
+                    out geom;`;
+
+                    const buildingsResponse = await fetch(buildingsUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'text',
+                        },
+                        body: buildingsQuery,
+                    });
+
+                    if (!buildingsResponse.ok) throw new Error('שגיאה בטעינת בניינים קרובים');
+                    const buildingsData = await buildingsResponse.json();
+
+                    // Update dropdown
+                    const dropdown = document.getElementById('nearbyBuildings');
+                    dropdown.innerHTML = '<option value="">בחר בניין קרוב</option>';
+
+                    if (buildingsData.elements.length > 0) {
+                        buildingsData.elements.forEach(building => {
+                            if (building.tags) {
+                                const name = building.tags.name || '';
+                                const nameHe = building.tags['name:he'] || '';
+                                const nameEn = building.tags['name:en'] || building.tags['name:en2'] || '';
+                                
+                                if (name || nameHe || nameEn) {
+                                    const option = document.createElement('option');
+                                    option.value = JSON.stringify({
+                                        id: building.id,
+                                        type: building.type,
+                                        geometry: building.geometry,
+                                        tags: building.tags
+                                    });
+                                    
+                                    const displayTexts = [];
+                                    if (nameHe) displayTexts.push(nameHe);
+                                    if (nameEn) displayTexts.push(nameEn);
+                                    if (name && !displayTexts.includes(name)) displayTexts.push(name);
+                                    
+                                    option.textContent = displayTexts.join(' | ');
+                                    dropdown.appendChild(option);
+                                }
+                            }
+                        });
+                        showStatus('המיקום זוהה בהצלחה ונמצאו בניינים בקרבת מקום');
+                    } else {
+                        showStatus('המיקום זוהה בהצלחה - לא נמצאו בניינים בקרבת מקום');
+                    }
+                } catch (error) {
+                    showStatus('שגיאה בקבלת פרטי המיקום', 'error');
+                    console.error('Error:', error);
+                }
+            },
+            function(error) {
+                let message = 'שגיאה בזיהוי המיקום';
+                switch (error.code) {
+                    case error.PERMISSION_DENIED:
+                        message = 'אין הרשאה לקבלת מיקום';
+                        break;
+                    case error.POSITION_UNAVAILABLE:
+                        message = 'המיקום אינו זמין';
+                        break;
+                    case error.TIMEOUT:
+                        message = 'תם הזמן לקבלת המיקום';
+                        break;
+                }
+                showStatus(message, 'error');
+            }
+        );
+    } else {
+        showStatus('הדפדפן אינו תומך בשירותי מיקום', 'error');
+    }
+});
+
+// Add click handler for map
+// Add click handler for map
+map.on('click', function(e) {
+    const lat = e.latlng.lat;
+    const lng = e.latlng.lng;
+    
+    if (currentMarker) {
+        map.removeLayer(currentMarker);
+    }
+    currentMarker = L.marker([lat, lng]).addTo(map);
+    
+    // First, reverse geocode the clicked location
+    fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=he`)
+        .then(response => response.json())
+        .then(async (data) => {
+            currentLocation = data;
+            document.getElementById('locationDetails').innerHTML = `
+                <div class="text-sm">
+                    <strong>כתובת:</strong> ${data.display_name}
+                </div>
+                <div class="text-sm">
+                    <strong>רחוב:</strong> ${data.address.road || 'לא זוהה'}
+                </div>
+                <div class="text-sm">
+                    <strong>עיר:</strong> ${data.address.city || data.address.town || 'לא זוהה'}
+                </div>
+            `;
+
+            // Then fetch nearby buildings
+            try {
+                const buildingsUrl = 'https://overpass-api.de/api/interpreter';
+                const buildingsQuery = `data=[out:json];
+                (
+                    way["building"](around:100,${lat},${lng});
+                    relation["building"](around:100,${lat},${lng});
+                );
+                out geom;`;
+
+                const buildingsResponse = await fetch(buildingsUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'text',
+                    },
+                    body: buildingsQuery,
+                });
+
+                const buildingsData = await buildingsResponse.json();
+                
+                // Update the buildings dropdown
+                const dropdown = document.getElementById('nearbyBuildings');
+                dropdown.innerHTML = '<option value="">בחר בניין קרוב</option>';
+
+                buildingsData.elements.forEach(building => {
+                    if (building.tags) {
+                        const name = building.tags.name || '';
+                        const nameHe = building.tags['name:he'] || '';
+                        const nameEn = building.tags['name:en'] || building.tags['name:en2'] || '';
+                        
+                        if (name || nameHe || nameEn) {
+                            const option = document.createElement('option');
+                            option.value = JSON.stringify({
+                                id: building.id,
+                                type: building.type,
+                                geometry: building.geometry,
+                                tags: building.tags
+                            });
+                            
+                            const displayTexts = [];
+                            if (nameHe) displayTexts.push(nameHe);
+                            if (nameEn) displayTexts.push(nameEn);
+                            if (name && !displayTexts.includes(name)) displayTexts.push(name);
+                            
+                            option.textContent = displayTexts.join(' | ');
+                            dropdown.appendChild(option);
+                        }
+                    }
+                });
+
+                // Clear any existing building polygon
+                if (currentBuildingPolygon) {
+                    map.removeLayer(currentBuildingPolygon);
+                }
+
+            } catch (error) {
+                console.error('Error fetching nearby buildings:', error);
+            }
+        });
+});
+
+// Fetch nearby buildings function
+async function fetchNearbyBuildings() {
+    try {
+        const url = 'https://overpass-api.de/api/interpreter';
+        const data = `data=[out:json];
+        (
+          way["building"](around:100,31.909239,34.809051);
+          relation["building"](around:100,31.909239,34.809051);
+        );
+        out geom;`;
+
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'text',
+            },
+            body: data,
+        });
+
+        const buildingsData = await response.json();
+        const dropdown = document.getElementById('nearbyBuildings');
+
+        // Clear existing options except the first one
+        while (dropdown.options.length > 1) {
+            dropdown.remove(1);
         }
+
+        buildingsData.elements.forEach(building => {
+            if (building.tags) {
+                const name = building.tags.name || '';
+                const nameHe = building.tags['name:he'] || '';
+                const nameEn = building.tags['name:en'] || building.tags['name:en2'] || '';
+                
+                // Only add buildings that have at least one name
+                if (name || nameHe || nameEn) {
+                    const option = document.createElement('option');
+                    option.value = JSON.stringify({
+                        id: building.id,
+                        type: building.type,
+                        geometry: building.geometry
+                    });
+                    
+                    // Create display text with available names
+                    const displayTexts = [];
+                    if (nameHe) displayTexts.push(nameHe);
+                    if (nameEn) displayTexts.push(nameEn);
+                    if (name && !displayTexts.includes(name)) displayTexts.push(name);
+                    
+                    option.textContent = displayTexts.join(' | ');
+                    dropdown.appendChild(option);
+                }
+            }
+        });
+    } catch (error) {
+        console.error('Error fetching nearby buildings:', error);
+    }
+}
+
+// Add event listener for the dropdown
+document.getElementById('nearbyBuildings').addEventListener('change', function() {
+    if (!this.value) return;
+    
+    const buildingData = JSON.parse(this.value);
+    
+    // Calculate center point of the building
+    let lat = 0, lon = 0, count = 0;
+    buildingData.geometry.forEach(point => {
+        lat += point.lat;
+        lon += point.lon;
+        count++;
     });
+    
+    const center = {
+        lat: lat / count,
+        lon: lon / count
+    };
+
+    // Update map
+    if (currentMarker) {
+        map.removeLayer(currentMarker);
+    }
+    if (currentBuildingPolygon) {
+        map.removeLayer(currentBuildingPolygon);
+    }
+    
+    map.setView([center.lat, center.lon], 19);
+    currentMarker = L.marker([center.lat, center.lon]).addTo(map);
+    
+    // Draw building polygon
+    const polygonPoints = buildingData.geometry.map(point => [point.lat, point.lon]);
+    currentBuildingPolygon = L.polygon(polygonPoints, {
+        color: '#3b82f6',
+        weight: 2,
+        fillOpacity: 0.2
+    }).addTo(map);
+
+    // Update location details
+    const tags = buildingData.tags;
+    document.getElementById('locationDetails').innerHTML = `
+        <div class="text-sm">
+            <strong>בניין:</strong> ${tags['name:he'] || tags.name || ''}
+        </div>
+        <div class="text-sm">
+            <strong>שם באנגלית:</strong> ${tags['name:en'] || tags['name:en2'] || ''}
+        </div>
+        <div class="text-sm">
+            <strong>קומות:</strong> ${tags['building:levels'] || 'לא ידוע'}
+        </div>
+    `;
+});
+// Add variable for building polygon
+let currentBuildingPolygon = null;
+
+// Call fetchNearbyBuildings when the page loads
+//window.addEventListener('load', fetchNearbyBuildings);
 
 // Analyze Button Handler
 document.getElementById('analyzeButton').addEventListener('click', async function() {
@@ -561,37 +866,69 @@ document.getElementById('analyzeButton').addEventListener('click', async functio
         });
 
         // Create structured data for analysis
-        const analysisData = {
-            image: {
-                data: imageBase64,
-                filename: currentImage.name,
-                contentType: currentImage.type
-            },
-            location: {
-                coordinates: {
-                    lat: currentLocation.lat,
-                    lon: currentLocation.lon
-                },
-                address: {
-                    street: currentLocation.address?.road || '',
-                    city: currentLocation.address?.city || currentLocation.address?.town || '',
-                    formatted_address: currentLocation.display_name || ''
-                }
-            },
-            description: document.getElementById('caseDescription').value,
-            metadata: {
-                timestamp: new Date().toISOString(),
-                source: 'web-form'
-            }
+// Create structured data for analysis
+const analysisData = {
+    image: {
+        data: imageBase64,
+        filename: currentImage.name,
+        contentType: currentImage.type
+    },
+    location: {
+        coordinates: {
+            lat: Number(currentLocation.lat),
+            lon: Number(currentLocation.lon)
+        },
+        address: {
+            street: currentLocation.address?.road || '',
+            city: currentLocation.address?.city || currentLocation.address?.town || '',
+            formatted_address: currentLocation.display_name || ''
+        }
+    },
+    description: document.getElementById('caseDescription').value,
+    metadata: {
+        timestamp: new Date().toISOString(),
+        source: 'web-form'
+    }
+};
+
+// Add selected building details if available
+const selectedBuilding = document.getElementById('nearbyBuildings').value;
+if (selectedBuilding) {
+    try {
+        const buildingData = JSON.parse(selectedBuilding);
+        analysisData.building = {
+            id: buildingData.id,
+            type: buildingData.type,
+            name: buildingData.tags?.name || '',
+            name_he: buildingData.tags?.['name:he'] || '',
+            name_en: buildingData.tags?.['name:en'] || buildingData.tags?.['name:en2'] || '',
+            levels: buildingData.tags?.['building:levels']
         };
 
-        const response = await fetch('https://prod-02.northeurope.logic.azure.com:443/workflows/d9dba3d45cfb43bb88ee75d80662afac/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=5gmD4CitJbzzdYcOm7TDX-RAvITu6viyFd7uHd1EKuU', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(analysisData)
+        // Update location coordinates to building center if building is selected
+        let lat = 0, lon = 0, count = 0;
+        buildingData.geometry.forEach(point => {
+            lat += point.lat;
+            lon += point.lon;
+            count++;
         });
+        
+        analysisData.location.coordinates = {
+            lat: lat / count,
+            lon: lon / count
+        };
+    } catch (error) {
+        console.error('Error parsing building data:', error);
+    }
+}
+
+const response = await fetch('https://prod-02.northeurope.logic.azure.com:443/workflows/d9dba3d45cfb43bb88ee75d80662afac/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=5gmD4CitJbzzdYcOm7TDX-RAvITu6viyFd7uHd1EKuU', {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(analysisData)
+});
 
         if (!response.ok) {
             const errorData = await response.json().catch(() => null);
