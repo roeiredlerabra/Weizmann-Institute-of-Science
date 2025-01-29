@@ -688,13 +688,18 @@ document.getElementById('getLocation').addEventListener('click', function() {
                         body: buildingsQuery,
                     });
 
-                    if (!buildingsResponse.ok) throw new Error('שגיאה בטעינת בניינים קרובים');
-                    const buildingsData = await buildingsResponse.json();
+// Inside the location handler where buildings are fetched
+if (!buildingsResponse.ok) throw new Error('שגיאה בטעינת בניינים קרובים');
+const buildingsData = await buildingsResponse.json();
 
-                    // Use the new populate function instead of direct dropdown manipulation
-                    populateBuildingsDropdown(buildingsData.elements);
-                    
-                    showStatus('המיקום זוהה בהצלחה' + (buildingsData.elements.length > 0 ? ' ונמצאו בניינים בקרבת מקום' : ''));
+// Use the new populate function instead of direct dropdown manipulation
+populateBuildingsDropdown(buildingsData.elements);
+
+// Check buildings dropdown visibility before showing status
+const buildingsDropdown = document.querySelector('.buildings-dropdown');
+const hasVisibleBuildings = buildingsDropdown.style.display !== 'none';
+
+showStatus('המיקום זוהה בהצלחה' + (hasVisibleBuildings ? ' ונמצאו בניינים בקרבת מקום' : ''));
 
                 } catch (error) {
                     showStatus('שגיאה בקבלת פרטי המיקום', 'error');
